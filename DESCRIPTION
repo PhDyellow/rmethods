@@ -1,0 +1,17 @@
+Package: rmethods
+Title: Methods for Phil Dyers PhD
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Philip",
+           family = "Dyer",
+           role = c("aut", "cre"),
+           email = "phildyer@protonmail.com")
+Description: Set of functions used in my PhD.
+License: 
+Encoding: UTF-8
+LazyData: true
+Imports: 
+  data.table (>= 1.12.0),
+  lubridate (>= 1.7.4)
+Suggests: 
+    testthat
