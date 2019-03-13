@@ -5,23 +5,19 @@
 \title{Convert CSIRO CPR copepod CSV into R format}
 \usage{
 
-  convert_csiro_cpr_copepod(inFile = "/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv",
-  outFormat = "archivist", outDir = "results", outFile = NULL,
-  outFileSpecies = NULL)
+  convert_csiro_cpr_copepod(in_file = "/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv",
+  date_format = "ymd HMS")
 }
 \arguments{
-\item{inFile}{Pathe to the original CSV file. Default "/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv"}
+\item{in_file}{Pathe to the original CSV file. Default "/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv"}
 
-\item{outFormat}{Type of output. Values are ("csv", "rds", "archivist"). Default "archivist"}
-
-\item{outDir}{Directory of output file. Defaults to "results"}
-
-\item{outFile}{Name of output file. Defaults to inFile basename}
-
-\item{outFileSpecies}{Name of species list. Defaults to paste0(outFile, "_species")}
+\item{date_format}{lubridate::parse_date_time() orders string for converting dates into standard R format. Defaults to "ymd HMS"}
 }
 \value{
-File name as char string for outFormats "csv" and "rds" and hash string for ("archivist")
+A list containing:
+  \item{data}{A site by species data_frame. Metadata columns "lat", "lon" and "date",
+  and one column per species.}
+  \item{sp_names}{Names of species columns in \code{data}}
 }
 \description{
 Takes the CSIRO CPR copepod data in CSV form and converts it into
@@ -32,5 +28,4 @@ to the same format.
 \details{
 The magic numbers in this function are:
 column indexes and names for non-Species columns
-The date parsing string
 }

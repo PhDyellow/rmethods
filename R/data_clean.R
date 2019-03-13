@@ -7,72 +7,36 @@
 #'
 #' The magic numbers in this function are:
 #' column indexes and names for non-Species columns
-#' The date parsing string
 #'
 #'
-#' @param inFile Pathe to the original CSV file. Default "/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv"
-#' @param outFormat Type of output. Values are ("csv", "rds", "archivist"). Default "archivist"
-#' @param outDir Directory of output file. Defaults to "results"
-#' @param outFile Name of output file. Defaults to inFile basename
-#' @param outFileSpecies Name of species list. Defaults to paste0(outFile, "_species")
+#' @param in_file Pathe to the original CSV file. Default "/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv"
+#' @param date_format lubridate::parse_date_time() orders string for converting dates into standard R format. Defaults to "ymd HMS"
 #'
-#' @return File name as char string for outFormats "csv" and "rds" and hash string for ("archivist")
+#' @return A list containing:
+#'   \item{data}{A site by species data_frame. Metadata columns "lat", "lon" and "date",
+#'   and one column per species.}
+#'   \item{sp_names}{Names of species columns in \code{data}}
 
-convert_csiro_cpr_copepod <- function(inFile ="/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv",
-                                      outFormat = "archivist", outDir = "results", outFile =NULL,
-                                      outFileSpecies = NULL){
-
-  if (!(outFormat[1] %in% c("csv", "rds", "archivist"))) {
-    stop('Output format not recognised. Use one of ("csv", "rds", "archivist")')
-  }
-
-  if(is.null(outFile)){
-    outFile <- unlist(strsplit(basename(inFile), split = '.', fixed = TRUE))[1]
-  }
-
-  if(is.null(outFileSpecies)){
-    outFileSpecies <- paste0(outFile, "_species")
-  }
-  
-  print(outFileSpecies)
-  raw_data <- data.table::fread(file= inFile, header = TRUE)
+convert_csiro_cpr_copepod <- function(in_file ="/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv",
+                                      date_format = "ymd HMS"){
+  raw_data <- tryCatch({
+    data.table::fread(file= in_file, header = TRUE)
+  }, warning = function(w) {
+    stop("fread warning: ", w)
+  })
   mod_data <- as.data.frame(raw_data)
   names(mod_data) <- make.names(names(raw_data))
   sp_names <- names(mod_data)[-(1:4)]
   names(mod_data)[1:4] <- c("row", "lat", "lon", "date")
+  mod_data["row"] <- NULL
   mod_data$date <- tryCatch({
-    lubridate::parse_date_time(mod_data$date, orders = "ymd HMS")
+    lubridate::parse_date_time(mod_data$date, orders = date_format)
   }, warning = function(w) {
-    stop("Date parse string does not match data")
-  }
-
-  )
-
+    stop("Date parse string does not match data (", date_format,  "). ", "Warn: ", w)
+  })
 
   result <- list()
-  switch(outFormat[1],
-        csv = {
-           data.table::fwrite(x = mod_data, file = paste0(outDir, outFile, ".csv"))
-           data.table::fwrite(x = sp_names, file = paste0(outDir, outFileSpecies, ".csv"))
-           result$outFile <- paste0(outDir, outFile, ".csv")
-           result$outFileSpecies <- paste0(outDir, outFileSpecies, ".csv")
-  },
-
-        rds = {
-           saveRDS(object = mod_data, file = paste0(outDir, outFile, ".rds"))
-           saveRDS(object = sp_names, file = paste0(outDir, outFileSpecies, ".rds"))
-           result$outFile <- paste0(outDir, outFile, ".rds")
-           result$outFileSpecies <- paste0(outDir, outFileSpecies, ".rds")
-         },
-
-        archivist = {
-          result$outHash <- archivist::saveToLocalRepo(artifact = mod_data, repoDir = outDir, artifactName = outFile)
-          result$outHashSpecies <- archivist::saveToLocalRepo(artifact = sp_names, repoDir = outDir, artifactName = outFileSpecies)
-  },
-         {
-           stop('Unrecognised output format. Use one of ("csv", "rds", "archivist")')
-         }
-  )
-
-
+  result$data <- mod_data
+  result$sp_names <- sp_names
+  return(result)
 }
