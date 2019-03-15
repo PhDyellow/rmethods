@@ -69,7 +69,7 @@ import_biooracle_env <- function(env_vars = c("depth", "temp", "nitrate",
                                               "salinity", "curvel"),
                                  env_modes =c("mean", "range"),
                                  data_dir = "./data"){
-  pairs <- data.table::as.data.table(merge(env_vars, env_modes, all=TRUE))
+  pairs <- data.table::as.data.table(data.table::merge(env_vars, env_modes, all=TRUE))
   bioOracle_names <- apply(pairs[pairs["x"] != "depth",], 1,  function(x){sprintf("BO2_%s%s_ss", x[1], x[2])})
   ## Add bathymetry separately
   if ("depth" %in% env_vars){
