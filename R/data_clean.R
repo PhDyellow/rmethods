@@ -40,3 +40,43 @@ convert_csiro_cpr_copepod <- function(in_file ="/vmshare/phd/data/CSIRO_cpr/cpr_
   result$sp_names <- sp_names
   return(result)
 }
+
+
+#' Import BioORACLE layers from sdmpredictors library
+#'
+#' Given a list of environmental variables and a list of
+#' statistical measures, returns all valid combinations
+#' of environmental variable and statistical measure.
+#'
+#' Currently only sea surface measures are returned. ("ss" only, not "bdmean" "bdmax" or "bdmin")
+#'
+#' Available environmental variables are:
+#' "depth", "temp", "nitrate", "silicate", "chlo", "iron",  "salinity", "curvel" (current velocity),
+#' "icethick", "icecover" "dissox" (dissolved oxygen), "phosphate", "lightbot" (light at bottom),
+#' "carbonphyto" (carbon phytoplankton), "pp" (primary production)
+#'
+#' Available statistical measures are:
+#' "mean", "range", "min" (average annual min), "max", "ltmin" (long term minimum), "ltmax",
+#'
+#' @param env_vars character list of environmental variables. Default is
+#' c("depth", "temp", "nitrate", "silicate", "chlo", "iron",  "salinity", "curvel")
+#' @param env_modes character list of environmental statistics. Default is c("mean", "range")
+#' @param data_dir location for sdm_predictors to save downloaded layers into. Defaults to "./data"
+#'
+#' @return raster brick of all selected environmental layers
+import_biooracle_env <- function(env_vars = c("depth", "temp", "nitrate",
+                                              "silicate", "chlo", "iron",
+                                              "salinity", "curvel"),
+                                 env_modes =c("mean", "range"),
+                                 data_dir = "./data"){
+  pairs <- data.table::as.data.table(merge(env_vars, env_modes, all=TRUE))
+  bioOracle_names <- apply(pairs[pairs["x"] != "depth",], 1,  function(x){sprintf("BO2_%s%s_ss", x[1], x[2])})
+  ## Add bathymetry separately
+  if ("depth" %in% env_vars){
+    bioOracle_names <- c(bioOracle_names, "MS_bathy_5m")
+  }
+
+
+  env_data <- sdmpredictors::load_layers(bioOracle_names, datadir = data_dir)
+  return(env_data)
+}
