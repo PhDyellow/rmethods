@@ -64,13 +64,18 @@ convert_csiro_cpr_copepod <- function(in_file ="/vmshare/phd/data/CSIRO_cpr/cpr_
 #' @param data_dir location for sdm_predictors to save downloaded layers into. Defaults to "./data"
 #'
 #' @return raster brick of all selected environmental layers
+#'
 import_biooracle_env <- function(env_vars = c("depth", "temp", "nitrate",
                                               "silicate", "chlo", "iron",
                                               "salinity", "curvel"),
                                  env_modes =c("mean", "range"),
                                  data_dir = "./data"){
-  pairs <- data.table::as.data.table(data.table::merge(env_vars, env_modes, all=TRUE))
-  bioOracle_names <- apply(pairs[pairs["x"] != "depth",], 1,  function(x){sprintf("BO2_%s%s_ss", x[1], x[2])})
+  if(class(env_vars) != "character" | class(env_modes) != "character"){
+    stop("Parameters `env_vars` and `env_modes` must be character vectors.")
+  }
+
+  pairs <- merge(as.data.frame(env_vars, stringsAsFactors = FALSE), as.data.frame(env_modes,stringsAsFactors = FALSE), all=TRUE)
+  bioOracle_names <- apply(pairs[pairs["env_vars"] != "depth",], 1,  function(x){sprintf("BO2_%s%s_ss", x[1], x[2])})
   ## Add bathymetry separately
   if ("depth" %in% env_vars){
     bioOracle_names <- c(bioOracle_names, "MS_bathy_5m")
@@ -78,5 +83,6 @@ import_biooracle_env <- function(env_vars = c("depth", "temp", "nitrate",
 
 
   env_data <- sdmpredictors::load_layers(bioOracle_names, datadir = data_dir)
+  names(env_data) <- bioOracle_names
   return(env_data)
 }
