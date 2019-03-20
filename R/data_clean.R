@@ -117,7 +117,11 @@ import_seaaroundus_bio <- function(data_dir = "/vmshare/phd/data/SeaAroundUs/aus
   pelagic_sp_names <- unique(raw_data[raw_data$functional_group_name %in% sau_groups & grepl("^\\S+\\s{1}\\S+$", raw_data$taxon_scientific_name),"taxon_scientific_name"])
   pelagic_sp_total <- c(pelagic_sp_names, extra_sau_sp)
 
-  site_sp <- data.table::dcast(raw_data[raw_data$taxon_scientific_name %in% pelagic_sp_total & raw_data$year %in% years, c("cell_id", "taxon_scientific_name", "catch_sum")], formula = cell_id ~ taxon_scientific_name, value.var = "catch_sum", fun.aggregate = mean)
+  site_sp <- reshape2::dcast(
+    raw_data[raw_data$taxon_scientific_name %in% pelagic_sp_total & raw_data$year %in% years,
+             c("cell_id", "taxon_scientific_name", "catch_sum")],
+    formula = cell_id ~ taxon_scientific_name, value.var = "catch_sum",
+    fun.aggregate = mean, fill = 0)
   site_sp_lat <- cbind(sau_id_to_lat_lon(site_sp$cell_id), site_sp)
   site_sp_lat$cell_id <- NULL
   valid_sp_names <- make.names(names(site_sp_lat))

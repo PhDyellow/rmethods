@@ -14,7 +14,8 @@ Imports:
   data.table (>= 1.12.0),
   ggcorrplot,
   ggplot2,
-  lubridate (>= 1.7.4)
+  lubridate (>= 1.7.4),
+  reshape2 (>= 1.4.3)
 Suggests: 
   sdmpredictors,
   testthat
