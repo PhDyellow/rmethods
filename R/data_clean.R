@@ -86,3 +86,59 @@ import_biooracle_env <- function(env_vars = c("depth", "temp", "nitrate",
   names(env_data) <- bioOracle_names
   return(env_data)
 }
+
+
+#' Import SeaAroundUs data
+#'
+#' Pull in SeaAroundUs data and clean up to site by species matrix
+#'
+#' For now, just an RDS file, function is not accessing SeaAroundUs servers or a local cache.
+#'
+#'
+#'
+#' @param data_dir Directory to cache SeaAroundUs data
+#' @param sau_groups Character Vector of SeaAroundUs groups. Defaults to pelagic groups
+#' @param extra_sau_sp Character Vector of additional SeaAroundUs species. Defaults to pelagic sharks.
+#' @param years Integer range of years from 1950 to 2014. Defaults to 2010
+import_seaaroundus_bio <- function(data_dir = "/vmshare/phd/data/SeaAroundUs/ausEEZcatches.rds",
+                                   sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
+                                   extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
+                                                        "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
+                                                        "Alopias superciliosus", "Lamna nasus",
+                                                        "Emmelichthys nitidus nitidus"),
+                                   years = 2010){
+
+  if(strsplit(x =basename(data_dir), split = "\\.")[[1]][2] != "rds" | is.na(strsplit(x =basename(data_dir), split = "\\.")[[1]][2])){
+
+    stop("import_seaaroundus_bio is still under development, and must have an RDS file.")
+  }
+
+  raw_data <- readRDS(data_dir)
+  pelagic_sp_names <- unique(raw_data[raw_data$functional_group_name %in% sau_groups & grepl("^\\S+\\s{1}\\S+$", raw_data$taxon_scientific_name),"taxon_scientific_name"])
+  pelagic_sp_total <- c(pelagic_sp_names, extra_sau_sp)
+
+  site_sp <- data.table::dcast(raw_data[raw_data$taxon_scientific_name %in% pelagic_sp_total & raw_data$year %in% years, c("cell_id", "taxon_scientific_name", "catch_sum")], formula = cell_id ~ taxon_scientific_name, value.var = "catch_sum", fun.aggregate = mean)
+  site_sp_lat <- cbind(sau_id_to_lat_lon(site_sp$cell_id), site_sp)
+  site_sp_lat$cell_id <- NULL
+  result <- list()
+  result$data <- site_sp_lat
+  result$sp_names <- pelagic_sp_total
+  return(result)
+}
+
+#' helper function to convert SeaAroundUs IDs to lat and lon values
+sau_id_to_lat_lon <- function(cellId, gridSize = 0.5, centred = TRUE){
+  #need to reverse a cycle. every 720 steps is a latitude band
+  lonPerLat <- 360/gridSize
+  firstLat <- 90 - gridSize
+  firstLon <- -180 + gridSize
+  cellIdZeroed <- cellId - 1
+  latSteps <- floor(cellIdZeroed / lonPerLat)
+  lonSteps <- cellIdZeroed - latSteps*lonPerLat
+
+  if (centred){
+    data.frame(lon = firstLon + gridSize * lonSteps - (gridSize/2), lat = firstLat - gridSize * latSteps + (gridSize/2))
+  } else {
+    data.frame(lon = firstLon + gridSize * lonSteps, lat = firstLat - gridSize * latSteps)
+  }
+}
