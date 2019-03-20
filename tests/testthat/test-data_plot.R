@@ -44,6 +44,12 @@ test_that("Test marginal plotting", {
   set.seed(1000)
 
   marginals_species_test <-plot_marginals_species(bio_data[-(1:3)])
+  ggplot2::ggsave(filename = "tmp.png",
+                  plot = marginals_species_test[[1]],
+                  path = test_plot_dir,
+                  device = "png"
+  )
+  unlink(paste0(test_plot_dir, "/tmp.png"))
   current_hash <- substring(digest::digest(marginals_species_test), 1, 10)
   ggplot2::ggsave(filename = paste0("marginals_species_test_",
                                     format(Sys.time(), "%Y-%m-%d"),
