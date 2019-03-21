@@ -156,3 +156,76 @@ plot_maps_points <- function(dataset, lat_col, lon_col, sf_poly = NULL){
   }, dataset=dataset)
   return(point_plots)
 }
+
+
+plot_clusters <- function(x, colX, colY, clustMod, level = 0.683, legendThres = 10, alpha=0.3){
+
+  #generate ellipses
+  ellipsePoints <- foreach(i = 1:clustMod$G, .combine = rbind) %do% {
+    ellipsePoints <- ellipse(x = clustMod$parameters$variance$sigma[,,i], centre = clustMod$parameters$mean[,i], level = level^2)
+    ellipsePoints <- as.data.frame(ellipsePoints)
+    ellipsePoints <- cbind(ellipsePoints, data.frame(g=i))
+  }
+
+  pl <- ggplot(data = data.frame(x = x[[colX]], y = x[[colY]], c = clustMod$classification), mapping = aes(x=x, y=y, color=as.factor(c))) +
+    scale_colour_manual(values = rainbow(clustMod$G))  +
+    geom_point(shape = ".", alpha = alpha) +
+    geom_path(data = ellipsePoints, mapping = aes_string(x=colX, y=colY, color = as.factor(ellipsePoints$g)), inherit.aes = FALSE) +
+    geom_polygon(data = ellipsePoints, mapping = aes_string(x=colX, y=colY, fill = as.factor(ellipsePoints$g)), alpha = alpha,  inherit.aes = FALSE) +
+    theme_tufte()+
+    coord_fixed()
+
+  if (clustMod$G <= legendThres){
+    pl <- pl + guides(color=FALSE ) +  labs(fill = "Cluster")
+  } else {
+    pl <- pl + guides(color=FALSE, fill=FALSE )
+  }
+
+  return(pl)
+
+
+}
+
+plot_cluster_map <- function(x, rawx, clustMod, legendThres = 10, landPoly){
+  pl <- ggplot(data = data.frame(lon= x[["lon"]], lat= x[["lat"]], c = clustMod$classification), mapping = aes(x = lon, y = lat, fill = as.factor(c))) +
+    scale_fill_manual(values = rainbow(clustMod$G))  +
+    geom_raster(hjust = 0, vjust = 1) +
+    labs(fill = "cluster") +
+    geom_sf(data = landPoly, inherit.aes = FALSE, color = "black", fill= NA) +
+    coord_sf()+
+    theme_tufte() +
+    geom_contour(data = rawx[, .(x,y,MS_bathy_5m)], mapping = aes(x=x, y=y, z=MS_bathy_5m), inherit.aes = FALSE, breaks = c(-200))
+
+
+  if (clustMod$G <= legendThres){
+    pl <- pl + labs(fill = "Cluster")
+  } else {
+    pl <- pl + guides(color=FALSE, fill=FALSE )
+  }
+
+  return(pl)
+
+}
+
+plot_cluster_map_ci <- function(x, rawx, clustMod, legendThres = 10, landPoly, confThres){
+  keepSites <- clustMod$uncertainty < (1-confThres)
+
+
+  pl <- ggplot(data = data.frame(lon= x[["lon"]][keepSites], lat= x[["lat"]][keepSites], c = clustMod$classification[keepSites]), mapping = aes(x = lon, y = lat, fill = as.factor(c))) +
+    scale_fill_manual(values = rainbow(clustMod$G))  +
+    geom_raster(hjust = 0, vjust = 1) +
+    labs(fill = "cluster") +
+    geom_sf(data = landPoly, inherit.aes = FALSE, color = "black", fill= NA) +
+    coord_sf()+
+    theme_tufte() +
+    geom_contour(data = rawx[keepSites, .(x,y,MS_bathy_5m)], mapping = aes(x=x, y=y, z=MS_bathy_5m), inherit.aes = FALSE, breaks = c(-200))
+
+  if (clustMod$G <= legendThres){
+    pl <- pl + labs(fill = "Cluster")
+  } else {
+    pl <- pl + guides(color=FALSE, fill=FALSE )
+  }
+
+  return(pl)
+
+}
