@@ -291,3 +291,43 @@ flag_lower_outliers <- function(x, range, m = NULL, s = NULL){
   return(outliers)
 }
 
+
+#' Filter Rare species
+#'
+#' filters out species with fewer than n non-zero observations
+#'
+#'
+#' @param dataset A data.frame to filter
+#' @param n minimum number of non-zero observations to accept species
+#' @param exclude_cols Columns to ignore during filtering, always return true
+#'
+#' @return boolean vector of columns with rare species
+rare_sp_cols <- function(dataset, n = 5, exclude_cols = NULL){
+
+  data_names <- names(dataset)
+
+  filter_names <- setdiff(data_names, exclude_cols)
+
+  always_keep <- data_names %in% exclude_cols
+
+  rare_cols <- as.vector(apply(dataset > 0, 2, sum)) < n
+
+  return(rare_cols & !always_keep)
+
+}
+
+#' Restrict biological data to a bounding polygon
+#'
+restrict_poly_sp <- function(){
+  stop("not implemented yet")
+
+  tempA <- st_as_sf(x = bioData[, .(lon, lat)],
+                    coords = c("lon", "lat"),
+                    crs = st_crs(boundingPoly))
+
+  withinBoundingPoly <- as.vector(st_contains(boundingPoly,  tempA, sparse = FALSE))
+
+
+  bioData <- bioData[withinBoundingPoly,]
+
+}

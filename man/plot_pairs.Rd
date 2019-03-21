@@ -4,7 +4,7 @@
 \alias{plot_pairs}
 \title{Plots pairs of variables}
 \usage{
-plot_pairs(dataset)
+plot_pairs(dataset, coord_equal = FALSE)
 }
 \arguments{
 \item{dataset}{A data.frame of variables to plot}

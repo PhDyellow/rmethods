@@ -139,3 +139,13 @@ test_that("Remvoing species outliers behaves as expected", {
   expect_equal(sum(outlier_rows_env(dataset = test_data, range = 2)), 339) # With seed 201903
 
 })
+
+
+test_data <- data.frame(a = 1:10, b= rep(0, length.out = length(1:10)), c= rep(c(0,1), length.out = length(1:10), each= 6))
+test_that("Excluding rare species columns works as expected",{
+  expect_equal(rare_sp_cols(test_data, n = 5, exclude_cols = NULL), c(FALSE, TRUE, TRUE))
+  expect_equal(rare_sp_cols(test_data, n = 2, exclude_cols = NULL), c(FALSE, TRUE, FALSE))
+  expect_equal(rare_sp_cols(test_data, n = 2, exclude_cols = c("b")), c(FALSE, FALSE, FALSE))
+  expect_equal(rare_sp_cols(test_data, n = 20, exclude_cols = c("b")), c(TRUE, FALSE, TRUE))
+
+})
