@@ -174,7 +174,7 @@ log_env_data <- function(dataset,
     if(all(dataset[[i]] < 0 )) {
       #invert then log
       trans_data[[i]] <- log(abs(dataset[[i]]))
-    } else if (any(dataset[[i]] <= 0 )){
+    } else if (any(dataset[[i]] <= 0, na.rm = TRUE )){
       #shift above 0, by 10% of smallest value
       min_val <- min(dataset[[i]])
       smallest <- min(abs(dataset[[i]]))
