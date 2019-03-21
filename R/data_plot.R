@@ -76,7 +76,7 @@ plot_pairs <- function(dataset, coord_equal = FALSE){
         pair_plot <- ggplot2::ggplot(data = dataset[, c(v1, v2)], mapping = ggplot2::aes_string(x = v1, y = v2)) +
           ggplot2::geom_point(shape = ".", alpha = 0.1)
         if(coord_equal){
-          pair_plot <- pair_plot + coord_equal()
+          pair_plot <- pair_plot + ggplot2::coord_equal()
         }
         return(pair_plot)
       } else {
