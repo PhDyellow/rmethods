@@ -67,7 +67,7 @@ plot_marginals_species <- function(dataset, binwidth = 1){
 #' @param dataset A data.frame of variables to plot
 #'
 #' @return List of ggplot objects. The ggplot objects are not printed
-plot_pairs <- function(dataset){
+plot_pairs <- function(dataset, coord_equal = FALSE){
   dNames <- names(dataset)
   pair_plots <- mapply(
     FUN = function(v1, v2, dataset){
@@ -75,6 +75,9 @@ plot_pairs <- function(dataset){
       if (match(v1, dNames) < match(v2, dNames)){
         pair_plot <- ggplot2::ggplot(data = dataset[, c(v1, v2)], mapping = ggplot2::aes_string(x = v1, y = v2)) +
           ggplot2::geom_point(shape = ".", alpha = 0.1)
+        if(coord_equal){
+          pair_plot <- pair_plot + coord_equal()
+        }
         return(pair_plot)
       } else {
         return(NULL)
