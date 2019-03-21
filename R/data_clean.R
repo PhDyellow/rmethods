@@ -148,3 +148,146 @@ sau_id_to_lat_lon <- function(cellId, gridSize = 0.5, centred = TRUE){
     data.frame(lon = firstLon + gridSize * lonSteps, lat = firstLat - gridSize * latSteps)
   }
 }
+
+
+#' Take log of selected env vars
+#'
+#' log_env_data safely applies a log transform to
+#' specific columns in an environmental data.frame
+#'
+#' Generally, I want to transform everything except a few key cols
+#' so log_env_data just does that, inverting and offsetting as needed
+#'
+#' @param dataset A data.frame to transform
+#' @param exclude_cols A character vector of col names that will not be transformed
+log_env_data <- function(dataset,
+                         exclude_cols = NULL
+){
+
+  data_names <- names(dataset)
+
+  log_names <- setdiff(data_names, exclude_cols)
+
+  trans_data <- dataset
+
+  for(i in log_names){
+    if(all(dataset[[i]] < 0 )) {
+      #invert then log
+      trans_data[[i]] <- log(abs(dataset[[i]]))
+    } else if (any(dataset[[i]] <= 0 )){
+      #shift above 0, by 10% of smallest value
+      min_val <- min(dataset[[i]])
+      smallest <- min(abs(dataset[[i]]))
+      if(smallest == 0 ){
+        smallest <- .Machine$double.eps
+      } else {
+        smallest <- smallest/10
+      }
+      trans_data[[i]] <- log(dataset[[i]] - min_val + smallest)
+    } else {
+      #Data is all positive
+      trans_data[[i]] <- log(dataset[[i]])
+    }
+
+  }
+
+  return(trans_data)
+
+}
+
+#' Detect outliers in environmental data.frame
+#'
+#' Returns a boolean vector of length \code{nrow(dataset)} showing which
+#' observations to keep
+#'
+#' Outliers are specified as being more than \code{range}*\sigma from the mean
+#' within a column. Any row with at least one outlier is excluded.
+#'
+#' @param dataset A data.frame of site by environmental obervations
+#' @param range Keep points that lie within \code{range}*\sigma of the mean
+#' @param exclude_cols Columns to ignore for identifying rows with outliers
+outlier_rows_env <- function(dataset, range = 3, exclude_cols = NULL){
+
+  data_names <- names(dataset)
+
+  filter_names <- setdiff(data_names, exclude_cols)
+
+  outlier_bool <- list()
+
+  for(i in filter_names){
+    outlier_bool[[i]] <- flag_upper_outliers(x = dataset[[i]], range = range) |
+      flag_lower_outliers(x = dataset[[i]], range = range)
+  }
+  outlier_bool <- as.data.frame(outlier_bool)
+  return(apply(outlier_bool, 1 ,any))
+
+}
+
+
+#' Remove outliers from a species data.frame
+#'
+#' Returns a boolean vector of length \code{nrow(dataset)} showing which
+#' observations to keep
+#'
+#' Outliers are specified as being more than \code{range}*\sigma from the mean
+#' within a column. Any row with at least one outlier is excluded.
+#'
+#' Species observations are zero-inflated, so zero's are ignored for calculating
+#' the mean and standard deviation. Also, only very large counts above the mean
+#' are excluded as outliers, small counts below the mean are always kept.
+#'
+#' @param dataset A data.frame of site by environmental obervations
+#' @param range Keep points that lie within \code{range}*\sigma of the mean
+#' @param exclude_cols Columns to ignore for identifying rows with outliers
+#'
+outlier_rows_sp <- function(dataset, range = 3, exclude_cols = NULL){
+
+  data_names <- names(dataset)
+
+  filter_names <- setdiff(data_names, exclude_cols)
+
+  outlier_bool <- list()
+
+  for(i in filter_names){
+    m <- mean(dataset[[i]][dataset[[i]] > 0])
+    s <- sd(dataset[[i]][dataset[[i]] > 0])
+    outlier_bool[[i]] <- flag_upper_outliers(x = dataset[[i]], range = range, m = m, s = s)
+  }
+  outlier_bool <- as.data.frame(outlier_bool)
+  return(apply(outlier_bool, 1 ,any))
+
+}
+
+
+
+#' Flag upper outliers from a single vector
+#'
+#' helper function to flag upper outliers from a vector
+flag_upper_outliers <- function(x, range, m = NULL, s = NULL){
+  if(is.null(m)){
+    m <- mean(x)
+  }
+  if(is.null(s)){
+    s <- sd(x)
+  }
+
+  outliers <- x > m + range * s
+  return(outliers)
+}
+
+
+#' Flag lower outliers from a single vector
+#'
+#' helper function to flag upper outliers from a vector
+#'
+flag_lower_outliers <- function(x, range, m = NULL, s = NULL){
+  if(is.null(m)){
+    m <- mean(x)
+  }
+  if(is.null(s)){
+    s <- sd(x)
+  }
+  outliers <- x < m - range * s
+  return(outliers)
+}
+

@@ -70,3 +70,72 @@ test_that("import_seaaroundus_bio returns correctly", {
                    "Thunnus.maccoyii", "Thunnus.obesus", "Thunnus.orientalis",
                    "Thunnus.tonggol", "Xiphias.gladius" ))
 })
+
+test_data <- data.frame(a = c(-1:1), b = c(0.2:3), c = (-5:-3))
+test_that("Taking the log of Env data works reliably", {
+  expect_equal(log_env_data(dataset = test_data,
+                            exclude_cols = "a"),
+               data.frame(a = c(-1:1), b = log(0.2:3), c = log(abs(-5:-3))))
+  expect_equal(log_env_data(dataset = test_data,
+                            exclude_cols = NULL),
+               data.frame(a = log((-1:1)--1+.Machine$double.eps), b = log(0.2:3), c = log(abs(-5:-3))))
+
+
+})
+
+
+set.seed(201903)
+test_data_length <- 1000
+test_data <- data.frame(a = rnorm(n = test_data_length),
+                        b = rnorm(n = test_data_length),
+                        c = rnorm(n = test_data_length))
+#test_data <- c(-10:10, -3:3, -3:3)
+test_mean <- apply(X = as.matrix(test_data), MARGIN = 2, FUN = mean)
+test_std <- apply(X = as.matrix(test_data), MARGIN = 2, FUN = sd)
+
+test_that("Remvoing env outliers behaves as expected", {
+  expect_length(outlier_rows_env(dataset = test_data, range = 1), test_data_length)
+  #At range = 1 for Gaussian data, 1/3 of samples are outliers
+  #Probability of a whole row (3 variables) with no outliers is (2/3)^3 = 0.29
+  # Probability of a row being excluded is 1 - 0.29 = 0.71 or 710 out of 1000
+  expect_equal(sum(outlier_rows_env(dataset = test_data, range = 1)), 685) #With seed 201903
+  #At range = 2 for Gaussian data, 1/20 of samples are outliers
+  #Probability of a whole row (3 variables) with no outliers is (19/20)^3 = 0.85
+  # Probability of a row being excluded is 1 - 0.85 = 0.15 or 150 out of 1000
+  expect_equal(sum(outlier_rows_env(dataset = test_data, range = 2)), 127) # With seed 201903
+
+})
+
+
+set.seed(201903)
+test_data_length <- 10000
+prob_zero <- 0.5
+lambda <- 16
+test_data_raw <- data.frame(a = rpois(n = test_data_length, lambda = lambda),
+                        b = rpois(n = test_data_length, lambda = lambda),
+                        c = rpois(n = test_data_length, lambda = lambda))
+zeros <- data.frame(a = rbinom(test_data_length, 1, prob = prob_zero),
+                    b = rbinom(test_data_length, 1, prob = prob_zero),
+                    c = rbinom(test_data_length, 1, prob = prob_zero))
+test_data <- test_data_raw*zeros
+#test_data <- c(-10:10, -3:3, -3:3)
+test_mean <- apply(X = as.matrix(test_data), MARGIN = 2, FUN = mean)
+test_std <- apply(X = as.matrix(test_data), MARGIN = 2, FUN = sd)
+
+test_that("Remvoing species outliers behaves as expected", {
+  expect_length(outlier_rows_sp(dataset = test_data, range = 1), test_data_length)
+  # The data is zero inflated, but 0's are ignored for finding mean and variance
+  # Also, small sample counts are never outliers for species data, but may be noise in the signal.
+  # Assuming std deviation is approximately similar for Poisson as for Gaussian at lambda = 16
+  # At range = 1 for Poisson data (lambda = 16), 1/6 of samples are upper outliers, and
+  # 1/2 of all samples are discarded as 0. So 1/12 samples will be outliers.
+  # Probability of a whole row (3 variables) with no outliers is (11/12)^3 = 0.77
+  # Probability of a row being excluded is 1 - 0.77 = 0.23 or 2300 out of 10000
+  expect_equal(sum(outlier_rows_sp(dataset = test_data, range = 1)), 2320) #With seed 201903
+  # At range = 2 for Poisson data (lambda = 16), 1/40 of samples are upper outliers, and
+  # 1/2 of all samples are discarded as 0. So 1/80 samples will be outliers.
+  # Probability of a whole row (3 variables) with no outliers is (79/80)^3 = 0.96
+  # Probability of a row being excluded is 1 - 0.96 = 0.04 or 400 out of 10000
+  expect_equal(sum(outlier_rows_env(dataset = test_data, range = 2)), 339) # With seed 201903
+
+})
