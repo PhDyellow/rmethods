@@ -103,6 +103,7 @@ test_that("Remvoing env outliers behaves as expected", {
   #Probability of a whole row (3 variables) with no outliers is (19/20)^3 = 0.85
   # Probability of a row being excluded is 1 - 0.85 = 0.15 or 150 out of 1000
   expect_equal(sum(outlier_rows_env(dataset = test_data, range = 2)), 127) # With seed 201903
+  expect_error(outlier_rows_env(dataset = as.matrix(test_data), range = 1), "outlier_rows_env requires a data.frame")
 
 })
 
@@ -136,8 +137,8 @@ test_that("Remvoing species outliers behaves as expected", {
   # 1/2 of all samples are discarded as 0. So 1/80 samples will be outliers.
   # Probability of a whole row (3 variables) with no outliers is (79/80)^3 = 0.96
   # Probability of a row being excluded is 1 - 0.96 = 0.04 or 400 out of 10000
-  expect_equal(sum(outlier_rows_env(dataset = test_data, range = 2)), 339) # With seed 201903
-
+  expect_equal(sum(outlier_rows_sp(dataset = test_data, range = 2)), 339) # With seed 201903
+  expect_error(outlier_rows_sp(dataset = as.matrix(test_data), range = 1), "outlier_rows_sp requires a data.frame")
 })
 
 

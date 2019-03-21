@@ -208,6 +208,10 @@ log_env_data <- function(dataset,
 #' @param exclude_cols Columns to ignore for identifying rows with outliers
 outlier_rows_env <- function(dataset, range = 3, exclude_cols = NULL){
 
+  if(class(dataset) != "data.frame"){
+    stop("outlier_rows_env requires a data.frame")
+  }
+
   data_names <- names(dataset)
 
   filter_names <- setdiff(data_names, exclude_cols)
@@ -241,6 +245,10 @@ outlier_rows_env <- function(dataset, range = 3, exclude_cols = NULL){
 #' @param exclude_cols Columns to ignore for identifying rows with outliers
 #'
 outlier_rows_sp <- function(dataset, range = 3, exclude_cols = NULL){
+
+  if(class(dataset) != "data.frame"){
+    stop("outlier_rows_sp requires a data.frame")
+  }
 
   data_names <- names(dataset)
 
