@@ -157,62 +157,157 @@ plot_maps_points <- function(dataset, lat_col, lon_col, sf_poly = NULL){
   return(point_plots)
 }
 
+#' Plot cluster pairs
+#'
+#' Generates a list of plots, of each pair of variables,
+#' showing clustered data with ellipses.
+#'
+#' @param dataset A data.frame of variables to plot.
+#' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
+#' @param level The heigth of the contour line for the ellipses. Defaults to 68.3%, or 1 standard deviation from the mean
+#' @param legend_thres When the number of clusters exceeds legend_thres, the legend is not plotted
+#' @param alpha Alpha value of scatterplot points
+#'
+#' @return A list of ggplot object. The ggplot objects are not printed
+plot_cluster_pairs <- function(dataset, cluster_model,  level = 0.683, legend_thres = 10, alpha=0.3){
+  dNames <- colnames(cluster_model$data)
+  cluster_pair_plots <- mapply(
+    FUN = function(v1, v2, dataset, cluster_model, level, legend_thres, alpha){
+      dNames <- colnames(cluster_model$data)
+      if (match(v1, dNames) < match(v2, dNames)){
+        pair_plot <- rmethods::plot_clusters(dataset = dataset, col_x = v1, col_y = v2,
+                                             cluster_model = cluster_model,
+                                             level = level, legend_thres = legend_thres, alpha = alpha)
+        return(pair_plot)
+      } else {
+        return(NULL)
+      }
 
-plot_clusters <- function(x, colX, colY, clustMod, level = 0.683, legendThres = 10, alpha=0.3){
+    },
+    rep(dNames, times = length(dNames)),
+    rep(dNames, each = length(dNames)),
+    MoreArgs = list(dataset=dataset, cluster_model = cluster_model,
+                    level = level, legend_thres = legend_thres, alpha = alpha),
+    SIMPLIFY = FALSE,
+    USE.NAMES = FALSE
+  )
+  cluster_pair_plots <- cluster_pair_plots[-which(sapply(cluster_pair_plots, is.null))]
+  return(cluster_pair_plots)
+}
+
+
+
+#' Plot clustered data with cluster ellipses
+#'
+#' Produces a scatter plot of the clustered data,
+#' coloured by cluster. Clusters are shown
+#' as ellipses at the 1 standard deviation contour line.
+#' If not all columns in dataset were used for fitting the
+#' cluster model, the relevant columns will be read from
+#' the cluster_model
+#'
+#' @param dataset A dataframe of observations
+#' @param col_x Column name for x axis
+#' @param col_y Column name for y axis
+#' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
+#' @param level The heigth of the contour line for the ellipses. Defaults to 68.3%, or 1 standard deviation from the mean
+#' @param legend_thres When the number of clusters exceeds legend_thres, the legend is not plotted
+#' @param alpha Alpha value of scatterplot points
+#'
+#' @return A ggplot object. The ggplot object is not printed
+#'
+#' @importFrom foreach foreach %do%
+plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, legend_thres = 10, alpha=0.3){
 
   #generate ellipses
-  ellipsePoints <- foreach(i = 1:clustMod$G, .combine = rbind) %do% {
-    ellipsePoints <- ellipse(x = clustMod$parameters$variance$sigma[,,i], centre = clustMod$parameters$mean[,i], level = level^2)
-    ellipsePoints <- as.data.frame(ellipsePoints)
-    ellipsePoints <- cbind(ellipsePoints, data.frame(g=i))
+  ellipse_points <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
+    ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[,,i], centre = cluster_model$parameters$mean[,i], level = level^2)
+    ellipse_points <- as.data.frame(ellipse_points)
+    ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
 
-  pl <- ggplot(data = data.frame(x = x[[colX]], y = x[[colY]], c = clustMod$classification), mapping = aes(x=x, y=y, color=as.factor(c))) +
-    scale_colour_manual(values = rainbow(clustMod$G))  +
-    geom_point(shape = ".", alpha = alpha) +
-    geom_path(data = ellipsePoints, mapping = aes_string(x=colX, y=colY, color = as.factor(ellipsePoints$g)), inherit.aes = FALSE) +
-    geom_polygon(data = ellipsePoints, mapping = aes_string(x=colX, y=colY, fill = as.factor(ellipsePoints$g)), alpha = alpha,  inherit.aes = FALSE) +
-    theme_tufte()+
-    coord_fixed()
+  classification <- predict(cluster_model, dataset[, colnames(cluster_model$data)])
 
-  if (clustMod$G <= legendThres){
-    pl <- pl + guides(color=FALSE ) +  labs(fill = "Cluster")
+  pl <- ggplot2::ggplot(data = dataset, mapping = ggplot2::aes_string(x=col_x, y=col_y,
+                                                                      color=as.factor(classification$classification))) +
+    ggplot2::scale_colour_manual(values = rainbow(cluster_model$G))  +
+    ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_path(data = ellipse_points, mapping = aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points$g)), inherit.aes = FALSE) +
+    ggplot2::geom_polygon(data = ellipse_points, mapping = aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points$g)), alpha = alpha,  inherit.aes = FALSE) +
+    ggthemes::theme_tufte()+
+    ggplot2::coord_fixed()
+
+  if (cluster_model$G <= legend_thres){
+    pl <- pl + ggplot2::guides(color=FALSE ) +  ggplot2::labs(fill = "Cluster")
   } else {
-    pl <- pl + guides(color=FALSE, fill=FALSE )
+    pl <- pl + ggplot2::guides(color=FALSE, fill=FALSE )
+  }
+
+  return(pl)
+}
+
+
+
+
+#' Plot map coloured by assigned cluster
+#'
+#' Produces a map plot coloured by cluster.
+#' A bounding polygon may be provided for context.
+#' If not all columns in dataset were used for fitting the
+#' cluster model, the relevant columns will be read from
+#' the cluster_model
+#'
+#' @param dataset A dataframe of observations with an associated fitted model
+#' @param col_x Column name for x axis
+#' @param col_y Column name for y axis
+#' @param depth_col Column name for bathymetry
+#' @param depth_contour Vector of depths used for contour lines.
+#' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
+#' @param legend_thres When the number of clusters exceeds legend_thres, the legend is not plotted
+#' @param sf_poly A polygon of class sf for plotting on the map.
+#'
+#' @return A ggplot object. The ggplot object is not printed
+#'
+plot_cluster_map <- function(dataset, col_x = "lon", col_y = "lat",
+                             depth_col = NULL, depth_contour = NULL,
+                             cluster_model, legend_thres = 10,
+                             sf_poly = NULL){
+
+  classification <- predict(cluster_model, dataset[, colnames(cluster_model$data)])
+
+  pl <- ggplot2::ggplot(data = dataset,
+               mapping = ggplot2::aes_string(x = col_x, y = col_y, fill = as.factor(classification$classification))) +
+    ggplot2::scale_fill_manual(values = rainbow(cluster_model$G))  +
+    ggplot2::geom_raster(hjust = 0, vjust = 1) +
+    ggplot2::labs(fill = "cluster") +
+    ggplot2::geom_sf(data = sf_poly, inherit.aes = FALSE, color = "black", fill= NA) +
+    ggplot2::coord_sf()+
+    ggthemes::theme_tufte()
+
+  if(!is.null(depth_col) & !is.null(depth_contour)){
+    pl <- pl + ggplot2::geom_contour(data = dataset[, c(col_x, col_y, depth_col)],
+                          mapping = ggplot2::aes_string(x=col_x, y=col_y, z=depth_col), inherit.aes = FALSE, breaks = depth_contour)
+  }
+
+
+  if (cluster_model$G <= legend_thres){
+    pl <- pl + ggplot2::labs(fill = "Cluster")
+  } else {
+    pl <- pl + ggplot2::guides(color=FALSE, fill=FALSE )
   }
 
   return(pl)
 
-
 }
 
-plot_cluster_map <- function(x, rawx, clustMod, legendThres = 10, landPoly){
-  pl <- ggplot(data = data.frame(lon= x[["lon"]], lat= x[["lat"]], c = clustMod$classification), mapping = aes(x = lon, y = lat, fill = as.factor(c))) +
-    scale_fill_manual(values = rainbow(clustMod$G))  +
-    geom_raster(hjust = 0, vjust = 1) +
-    labs(fill = "cluster") +
-    geom_sf(data = landPoly, inherit.aes = FALSE, color = "black", fill= NA) +
-    coord_sf()+
-    theme_tufte() +
-    geom_contour(data = rawx[, .(x,y,MS_bathy_5m)], mapping = aes(x=x, y=y, z=MS_bathy_5m), inherit.aes = FALSE, breaks = c(-200))
+#' Plot cluster map, but hide sites with low confidence
+plot_cluster_map_ci <- function(x, rawx, cluster_model, legend_thres = 10, landPoly, confThres){
+  stop("not implemented yet")
+  keepSites <- cluster_model$uncertainty < (1-confThres)
 
 
-  if (clustMod$G <= legendThres){
-    pl <- pl + labs(fill = "Cluster")
-  } else {
-    pl <- pl + guides(color=FALSE, fill=FALSE )
-  }
-
-  return(pl)
-
-}
-
-plot_cluster_map_ci <- function(x, rawx, clustMod, legendThres = 10, landPoly, confThres){
-  keepSites <- clustMod$uncertainty < (1-confThres)
-
-
-  pl <- ggplot(data = data.frame(lon= x[["lon"]][keepSites], lat= x[["lat"]][keepSites], c = clustMod$classification[keepSites]), mapping = aes(x = lon, y = lat, fill = as.factor(c))) +
-    scale_fill_manual(values = rainbow(clustMod$G))  +
+  pl <- ggplot(data = data.frame(lon= x[["lon"]][keepSites], lat= x[["lat"]][keepSites], c = cluster_model$classification[keepSites]), mapping = aes(x = lon, y = lat, fill = as.factor(c))) +
+    scale_fill_manual(values = rainbow(cluster_model$G))  +
     geom_raster(hjust = 0, vjust = 1) +
     labs(fill = "cluster") +
     geom_sf(data = landPoly, inherit.aes = FALSE, color = "black", fill= NA) +
@@ -220,7 +315,7 @@ plot_cluster_map_ci <- function(x, rawx, clustMod, legendThres = 10, landPoly, c
     theme_tufte() +
     geom_contour(data = rawx[keepSites, .(x,y,MS_bathy_5m)], mapping = aes(x=x, y=y, z=MS_bathy_5m), inherit.aes = FALSE, breaks = c(-200))
 
-  if (clustMod$G <= legendThres){
+  if (cluster_model$G <= legend_thres){
     pl <- pl + labs(fill = "Cluster")
   } else {
     pl <- pl + guides(color=FALSE, fill=FALSE )
