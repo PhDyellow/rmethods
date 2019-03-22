@@ -200,11 +200,11 @@ log_env_data <- function(dataset,
 #' Returns a boolean vector of length \code{nrow(dataset)} showing which
 #' observations to keep
 #'
-#' Outliers are specified as being more than \code{range}*\sigma from the mean
+#' Outliers are specified as being more than \code{range}*\eqn{\sigma} from the mean
 #' within a column. Any row with at least one outlier is excluded.
 #'
 #' @param dataset A data.frame of site by environmental obervations
-#' @param range Keep points that lie within \code{range}*\sigma of the mean
+#' @param range Keep points that lie within \code{range}*\eqn{\sigma} of the mean
 #' @param exclude_cols Columns to ignore for identifying rows with outliers
 outlier_rows_env <- function(dataset, range = 3, exclude_cols = NULL){
 
@@ -233,7 +233,7 @@ outlier_rows_env <- function(dataset, range = 3, exclude_cols = NULL){
 #' Returns a boolean vector of length \code{nrow(dataset)} showing which
 #' observations to keep
 #'
-#' Outliers are specified as being more than \code{range}*\sigma from the mean
+#' Outliers are specified as being more than \code{range}*\eqn{\sigma} from the mean
 #' within a column. Any row with at least one outlier is excluded.
 #'
 #' Species observations are zero-inflated, so zero's are ignored for calculating
@@ -241,7 +241,7 @@ outlier_rows_env <- function(dataset, range = 3, exclude_cols = NULL){
 #' are excluded as outliers, small counts below the mean are always kept.
 #'
 #' @param dataset A data.frame of site by environmental obervations
-#' @param range Keep points that lie within \code{range}*\sigma of the mean
+#' @param range Keep points that lie within \code{range}*\eqn{\sigma} of the mean
 #' @param exclude_cols Columns to ignore for identifying rows with outliers
 #'
 outlier_rows_sp <- function(dataset, range = 3, exclude_cols = NULL){

@@ -9,7 +9,7 @@ outlier_rows_env(dataset, range = 3, exclude_cols = NULL)
 \arguments{
 \item{dataset}{A data.frame of site by environmental obervations}
 
-\item{range}{Keep points that lie within \code{range}*\sigma of the mean}
+\item{range}{Keep points that lie within \code{range}*\eqn{\sigma} of the mean}
 
 \item{exclude_cols}{Columns to ignore for identifying rows with outliers}
 }
@@ -18,6 +18,6 @@ Returns a boolean vector of length \code{nrow(dataset)} showing which
 observations to keep
 }
 \details{
-Outliers are specified as being more than \code{range}*\sigma from the mean
+Outliers are specified as being more than \code{range}*\eqn{\sigma} from the mean
 within a column. Any row with at least one outlier is excluded.
 }
