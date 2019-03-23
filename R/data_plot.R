@@ -221,7 +221,7 @@ plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, l
 
   #generate ellipses
   ellipse_points <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
-    ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[,,i], centre = cluster_model$parameters$mean[,i], level = level^2)
+    ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[c(col_x, col_y),c(col_x, col_y),i], centre = cluster_model$parameters$mean[c(col_x, col_y),i], level = level^2)
     ellipse_points <- as.data.frame(ellipse_points)
     ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
