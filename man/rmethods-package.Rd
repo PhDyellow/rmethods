@@ -8,6 +8,14 @@
 \description{
 Set of functions used in my PhD.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/PhDyellow/rmethods}
+  \item Report bugs at \url{https://github.com/PhDyellow/rmethods/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Philip Dyer \email{phildyer@protonmail.com}
 
