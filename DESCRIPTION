@@ -18,6 +18,7 @@ Imports:
   ggplot2,
   lubridate (>= 1.7.4),
   mclust (>= 5.4.2),
+  raster (>= 2.8-19),
   reshape2 (>= 1.4.3)
 Suggests:
   MASS,

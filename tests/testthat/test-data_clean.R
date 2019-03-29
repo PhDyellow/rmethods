@@ -160,3 +160,70 @@ test_that("Excluding rare species columns works as expected",{
   expect_equal(rare_sp_cols(test_data, n = 20, exclude_cols = c("b")), c(TRUE, FALSE, TRUE))
 
 })
+
+library(raster)
+
+set.seed(20190328)
+env_data <- data.frame(env_a = rep(1, 100), env_b = rep(2, 100))
+env_data[3,] <- c(5,5) #no alignment
+env_data[5,] <- c(8,8) #outliers, aligns with test_bio[2,]
+env_data[9,] <- c(8,8) #outliers, aligns with test_bio[3,]
+
+b <- sapply(env_data, function(x){
+  rast <- raster(nrow=10, ncol=10, xmn=0, xmx=10, ymn=0, ymx=10)
+  rast[] <-x
+  return(rast)
+})
+test_env_raster <- brick(b)
+test_env_frame <- as.data.frame(rasterToPoints(test_env_raster))
+
+
+bio_subset <- test_env_frame[seq(1, 100, 4), c("x","y")]
+test_bio <- cbind(bio_subset, data.frame(
+  sp_a = rep(4,length.out = length(bio_subset$x)),
+  sp_b = rep(4,length.out = length(bio_subset$x)),
+  sp_c = rep(4,length.out = length(bio_subset$x))))
+test_bio[2,] <- c(test_bio[2,1:4], 10) #outliers
+
+
+test_that("clean_env_bio_gf() properly prepares data for a GF model",{
+  #Raster env
+  expect_equal(dim(clean_env_bio_gf(env_data = test_env_raster, bio_data = test_bio,
+                                coord_cols_bio = c("x", "y"), coord_cols_env = NULL,
+                                env_range = 3, env_accept_outliers = NULL,
+                                bio_range = 3, bio_accept_outliers = NULL,
+                                min_sp_samples = 5)[["data"]]), c(23, 7) )
+  expect_named(clean_env_bio_gf(env_data = test_env_raster, bio_data = test_bio,
+                                    coord_cols_bio = c("x", "y"), coord_cols_env = NULL,
+                                    env_range = 3, env_accept_outliers = NULL,
+                                bio_range = 3, bio_accept_outliers = NULL,
+                                min_sp_samples = 5), c("data", "sp_names", "env_names", "coord_names"))
+  expect_equivalent(clean_env_bio_gf(env_data = test_env_raster, bio_data = test_bio,
+                                    coord_cols_bio = c("x", "y"), coord_cols_env = NULL,
+                                    env_range = 3, env_accept_outliers = NULL,
+                                bio_range = 3, bio_accept_outliers = NULL,
+                                min_sp_samples = 5)[["data"]][,c("x","y")],
+                    bio_subset[c(-2, -3),] )
+
+  #Data.frame env
+  expect_equal(dim(clean_env_bio_gf(env_data = test_env_frame, bio_data = test_bio,
+                                    coord_cols_bio = c("x", "y"), coord_cols_env = c("x", "y"),
+                                    env_range = 3, env_accept_outliers = NULL,
+                                bio_range = 3, bio_accept_outliers = NULL,
+                                min_sp_samples = 5)[["data"]]), c(23, 7) )
+  expect_named(clean_env_bio_gf(env_data = test_env_frame, bio_data = test_bio,
+                                coord_cols_bio = c("x", "y"), coord_cols_env = c("x","y"),
+                                env_range = 3, env_accept_outliers = NULL,
+                                bio_range = 3, bio_accept_outliers = NULL,
+                                min_sp_samples = 5), c("data", "sp_names", "env_names", "coord_names"))
+  test_out <- clean_env_bio_gf(env_data = test_env_frame, bio_data = test_bio,
+                               coord_cols_bio = c("x", "y"), coord_cols_env = c("x", "y"),
+                               env_range = 3, env_accept_outliers = NULL,
+                               bio_range = 3, bio_accept_outliers = NULL,
+                               min_sp_samples = 5)
+  test_equal <- bio_subset[-c(2,3),]
+  expect_equivalent(test_out$data[do.call(order, test_out$data), c("x","y")],
+               test_equal[do.call(order, test_equal), c("x","y")])
+
+})
+

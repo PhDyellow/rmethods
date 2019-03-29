@@ -435,3 +435,81 @@ restrict_poly_sp <- function(){
   bioData <- bioData[withinBoundingPoly,]
 
 }
+
+#' Filter dataset for use in Gradient Forest
+#'
+#' Shapes and filters environmental and biological data
+#' into a format suitalbe for passing into a gradient forest
+#' fitting method
+#'
+#' If the env_data is in a data.frame format, then the coord_cols (or rows, if `coord_cols_env = c("")`)must match exactly between bio_data and env_data. Raster* objects assign bio_data rows to the nearest grid cell centre in env_data.
+#'
+#' @param env_data A Raster* object OR a data.frame containing environmental variables. Format should be site by environmental variables
+#' @param bio_data A data.frame of site by species observations of biological data
+#' @param coord_cols_bio A character vector of column names in bio_data that define longitude and latitude. When env_data is a raster, longitude must come first.
+#' @param coord_cols_env A character vector of column names in env_data that define sites spatially. If env_data is a Raster* object, this parameter is ignored. If coord_cols_env = c(""), then the sites in env_data are assumed to line up with the sites in bio_data
+#' @param env_range Number of standard deviations from the mean before a value is considered an outlier.
+#' @param bio_range Number of standard deviations from the mean before a value is considered an outlier.
+#' @param env_accept_outliers Environmental columns to accept all outliers
+#' @param bio_accept_outliers Biological sample columns to accept all outliers
+#' @param min_sp_samples Minimum number of non-zero observations needed for species to be accepted
+#'
+#' @return A list containing: \describe{
+#'   \item{\code{data}}{A site by species and environment data.frame}
+#'   \item{\code{sp_names}}{Names of species columns in \code{data}}
+#'   \item{\code{env_names}}{Names of environmental columns in \code{data}}
+#'   \item{\code{coord_names}}{Names of coordinate columns in \code{data}}
+#'   }
+clean_env_bio_gf <- function(env_data, bio_data,
+                             coord_cols_bio, coord_cols_env = NULL,
+                             env_range = 3, env_accept_outliers = NULL,
+                             bio_range = 3, bio_accept_outliers = NULL,
+                             min_sp_samples = 5){
+
+  bio_cols <- names(bio_data)[!(names(bio_data) %in% coord_cols_bio)]
+  env_cols <- names(env_data)[!(names(env_data) %in% coord_cols_env)]
+
+  if(grepl(pattern = "Raster[LBS].+", x = class(env_data))){
+    site_env <-  as.data.frame(raster::extract(env_data, bio_data[, coord_cols_bio]))
+    site_sp_env <- cbind(bio_data, site_env)
+  } else if(class(env_data) != "data.frame" ) {
+    stop("clean_env_bio_gf: Only Raster* objects and data.frames are supported for env_data")
+  } else if(is.null(coord_cols_env)){
+    stop("clean_env_bio_gf: When env_data is a data.frame, coord_cols_env must be defined")
+  } else if(all(c(coord_cols_env) == "")) {
+    ##rows in env_data are assumed to line up with rows in bio_data
+    site_sp_env <- cbind(bio_data, env_data)
+  } else {
+    ##Find sites in env_data that also appear in bio_data
+    env_cols <- names(env_data)
+    bio_cols <- names(bio_data)
+    site_sp_env <- merge(x = env_data, y = bio_data,  by.x = coord_cols_env, by.y = coord_cols_bio)
+  }
+
+
+  site_sp_env_complete <- complete.cases(site_sp_env)
+
+  ## env_cols already excludes the coord_cols_env
+  env_outliers <- rmethods::outlier_rows_env(site_sp_env[site_sp_env_complete, env_cols], range = env_range, exclude_cols = env_accept_outliers)
+
+  ## bio_cols already excludes the coord_cols_bio
+  sp_outliers <- rmethods::outlier_rows_sp(site_sp_env[site_sp_env_complete, bio_cols][!env_outliers,], range = bio_range, exclude_cols = bio_accept_outliers)
+
+  sp_rare <- rmethods::rare_sp_cols(site_sp_env[site_sp_env_complete, ]
+                                    [!env_outliers, ][!sp_outliers,],
+                                    n = min_sp_samples,
+                                    exclude_cols =  c(env_cols, coord_cols_env, coord_cols_bio))
+
+  sp_rare_cols <- names(site_sp_env[sp_rare])
+
+  ## Logging can be done afterwards, by passing the merged frame into
+  ## log_env_data and excluding the coord_cols and the sp_names cols
+  ## site_env_logged <- log_env_data(site_env, exclude_cols = env_not_log)
+  result <- list()
+  result$data <- site_sp_env[site_sp_env_complete, !sp_rare][!env_outliers,][!sp_outliers, ]
+  result$sp_names <- bio_cols[!(bio_cols %in% sp_names_rare)]
+  result$env_names <- env_cols
+  result$coord_names <- names(site_sp_env)[!names(site_sp_env) %in% c(result$sp_names, result$env_names, sp_rare_cols)]
+  return(result)
+}
+
