@@ -1,6 +1,8 @@
 context("test-cluster_plots")
 
 
+library(mclust)
+
 # 4 clusters, spherical with different variances and means
 test_plot_dir <- "test_plots"
 dir.create(test_plot_dir, showWarnings = FALSE)
@@ -29,7 +31,11 @@ test_that("ellipse plots work", {
   ggplot2::ggsave(filename = "tmp.png",
                   plot = plot_clusters_test,
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
   unlink(paste0(test_plot_dir, "/tmp.png"))
   current_hash <- substring(digest::digest(plot_clusters_test), 1, 10)
@@ -40,7 +46,11 @@ test_that("ellipse plots work", {
                                     ".png"),
                   plot = plot_clusters_test,
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
   expect_known_hash(plot_clusters_test, hash = "68296b1c1b")
 })
@@ -83,7 +93,11 @@ test_that("Clusters maps plot properly", {
   ggplot2::ggsave(filename = "tmp.png",
                   plot = plot_clusters_map_test,
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
   unlink(paste0(test_plot_dir, "/tmp.png"))
   current_hash <- substring(digest::digest(plot_clusters_map_test), 1, 10)
@@ -94,7 +108,11 @@ test_that("Clusters maps plot properly", {
                                     ".png"),
                   plot = plot_clusters_map_test,
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
 
   #Buffer size failure
@@ -143,7 +161,11 @@ test_that("Test pair plotting", {
                                     ".png"),
                   plot = pairs_test[[1]],
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
   expect_known_hash(pairs_test, hash = "2244657156")
 })

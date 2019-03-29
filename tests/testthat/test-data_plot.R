@@ -20,7 +20,10 @@ test_that("Test cor plot", {
   ggplot2::ggsave(filename = "tmp.png",
                   plot = cor_heatmap_test,
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
   )
   unlink(paste0(test_plot_dir, "/tmp.png"))
   current_hash <- substring(digest::digest(cor_heatmap_test), 1, 10)
@@ -31,7 +34,10 @@ test_that("Test cor plot", {
                                     ".png"),
                   plot = cor_heatmap_test,
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
                   )
   expect_known_hash(cor_heatmap_test, hash = "ce69dd04bb")
 
@@ -47,7 +53,10 @@ test_that("Test marginal plotting", {
   ggplot2::ggsave(filename = "tmp.png",
                   plot = marginals_species_test[[1]],
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
   )
   unlink(paste0(test_plot_dir, "/tmp.png"))
   current_hash <- substring(digest::digest(marginals_species_test), 1, 10)
@@ -58,7 +67,11 @@ test_that("Test marginal plotting", {
                                     ".png"),
                   plot = marginals_species_test[[1]],
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
   expect_known_hash(marginals_species_test, hash = "f9cfda9fc1")
 
@@ -76,7 +89,11 @@ test_that("Test marginal plotting", {
                                     ".png"),
                   plot = marginals_test[[1]],
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
   expect_known_hash(marginals_test, hash = "543b6a2152")
 
@@ -97,7 +114,11 @@ test_that("Test pair plotting", {
                                     ".png"),
                   plot = pairs_test[[1]],
                   path = test_plot_dir,
-                  device = "png"
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
   )
   expect_known_hash(pairs_test, hash = "7e98a7ca99")
 })
