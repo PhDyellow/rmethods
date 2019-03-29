@@ -23,52 +23,62 @@ test_that("convert_csiro_copepod() returns list of species names and data", {
 
 })
 
+test_data_dir <- "test_import_sau"
+dir.create(test_data_dir, showWarnings = FALSE)
+#min,min
+#min, max,
+#max,max,
+#max,min
+x_lims <- c(-114.45833,  -94.89167 )
+y_lims <- c(-13.97500,  18.25000)
+#list, because a polygon can contain holes
+test_area <- sf::st_polygon(list(rbind(c(x_lims[1], y_lims[1]),
+                                  c(x_lims[1], y_lims[2]),
+                                  c(x_lims[2], y_lims[2]),
+                                  c(x_lims[2], y_lims[1]),
+                                  c(x_lims[1], y_lims[1]))))
+#Visually validate the test area, covers South America
+#mapWorld <- ggplot2::borders("world", colour="gray50", fill="gray50") # create a layer of borders
+#ggplot2::ggplot() + mapWorld + ggplot2::geom_sf(data = test_area, fill = NA, color = "red")
+
 test_that("import_seaaroundus_bio returns correctly", {
-  expect_error(import_seaaroundus_bio(data_dir = test_data_dir,
-                                       sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
-                                       extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
-                                                        "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
-                                                        "Alopias superciliosus", "Lamna nasus",
-                                                        "Emmelichthys nitidus nitidus"),
-                                       years = 2010),
-    "import_seaaroundus_bio is still under development, and must have an RDS file")
-  expect_type(import_seaaroundus_bio(data_dir = "/vmshare/phd/data/SeaAroundUs/ausEEZcatches.rds",
-                                     sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
-                                     extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
-                                                      "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
-                                                      "Alopias superciliosus", "Lamna nasus",
-                                                      "Emmelichthys nitidus nitidus"),
-                                     years = 2010), "list")
-  expect_s3_class(import_seaaroundus_bio(data_dir = "/vmshare/phd/data/SeaAroundUs/ausEEZcatches.rds",
-                                     sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
-                                     extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
-                                                      "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
-                                                      "Alopias superciliosus", "Lamna nasus",
-                                                      "Emmelichthys nitidus nitidus"),
-                                     years = 2010)[["data"]], "data.frame")
-  expect_named(import_seaaroundus_bio(data_dir = "/vmshare/phd/data/SeaAroundUs/ausEEZcatches.rds",
+  expect_named(import_seaaroundus_bio(data_dir = test_data_dir,
                                       sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
                                       extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
                                                        "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
                                                        "Alopias superciliosus", "Lamna nasus",
                                                        "Emmelichthys nitidus nitidus"),
-                                      years = 2010)[["data"]],
-               c( "lon", "lat", "Acanthocybium.solandri",
-                   "Alopias.superciliosus", "Alopias.vulpinus", "Anodontostoma.chacunda",
-                   "Arripis.georgianus", "Arripis.trutta", "Auxis.thazard",
-                   "Bregmaceros.mcclellandi", "Carcharhinus.longimanus", "Coryphaena.hippurus",
-                   "Elagatis.bipinnulata", "Emmelichthys.nitidus.nitidus", "Euthynnus.affinis",
-                   "Hilsa.kelee", "Istiompax.indica", "Kajikia.audax",
-                   "Katsuwonus.pelamis", "Lamna.nasus", "Megalaspis.cordyla",
-                   "Megalops.cyprinoides", "Monodactylus.argenteus", "Pelates.quadrilineatus",
-                   "Pellona.ditchela", "Pomatomus.saltatrix", "Prionace.glauca",
-                   "Rachycentron.canadum", "Rastrelliger.brachysoma", "Rastrelliger.kanagurta",
-                   "Sardinella.lemuru", "Sardinops.sagax", "Scomber.australasicus",
-                   "Scomberomorus.commerson", "Scomberomorus.semifasciatus", "Selar.crumenophthalmus",
-                   "Sphyraena.novaehollandiae", "Sphyrna.lewini", "Sphyrna.zygaena",
-                   "Tetrapturus.angustirostris", "Thunnus.alalunga", "Thunnus.albacares",
-                   "Thunnus.maccoyii", "Thunnus.obesus", "Thunnus.orientalis",
-                   "Thunnus.tonggol", "Xiphias.gladius" ))
+                                      bounding_wkt = sf::st_as_text(test_area),
+                                      chunk_size = 100,
+                                      years = 2010:2012)[["data"]],
+               c("lon", "lat", "Acanthocybium.solandri", "Carcharhinus.longimanus",
+                 "Cetengraulis.mysticetus", "Coryphaena.hippurus", "Elops.saurus",
+                 "Euthynnus.lineatus", "Harengula.jaguana", "Istiompax.indica",
+                 "Istiophorus.albicans", "Istiophorus.platypterus", "Joturus.pichardi",
+                 "Kajikia.albida", "Kajikia.audax", "Katsuwonus.pelamis", "Makaira.mazara",
+                 "Megalops.atlanticus", "Opisthonema.libertate", "Prionace.glauca",
+                 "Rachycentron.canadum", "Sarda.sarda", "Sardinops.sagax", "Scomber.japonicus",
+                 "Scomberomorus.maculatus", "Selar.crumenophthalmus", "Tetrapturus.angustirostris",
+                 "Thunnus.alalunga", "Thunnus.albacares", "Thunnus.obesus", "Thunnus.orientalis",
+                 "Thunnus.thynnus", "Xiphias.gladius"))
+  expect_type(import_seaaroundus_bio(data_dir = test_data_dir,
+                                     sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
+                                     extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
+                                                      "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
+                                                      "Alopias superciliosus", "Lamna nasus",
+                                                      "Emmelichthys nitidus nitidus"),
+                                     bounding_wkt = sf::st_as_text(test_area),
+                                     chunk_size = 100,
+                                     years = 2010:2012), "list")
+  expect_s3_class(import_seaaroundus_bio(data_dir = test_data_dir,
+                                     sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
+                                     extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
+                                                      "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
+                                                      "Alopias superciliosus", "Lamna nasus",
+                                                      "Emmelichthys nitidus nitidus"),
+                                     bounding_wkt = sf::st_as_text(test_area),
+                                     chunk_size = 100,
+                                     years = 2010)[["data"]], "data.frame")
 })
 
 test_data <- data.frame(a = c(-1:1), b = c(0.2:3), c = (-5:-3))

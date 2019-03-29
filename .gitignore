@@ -3,3 +3,4 @@
 .RData
 tests/testthat/test_plots/*
 tests/testthat/data/*
+/tests/testthat/test_import_sau/*

@@ -92,33 +92,35 @@ import_biooracle_env <- function(env_vars = c("depth", "temp", "nitrate",
 #'
 #' Pull in SeaAroundUs data and clean up to site by species matrix
 #'
-#' For now, just an RDS file, function is not accessing SeaAroundUs servers or a local cache.
-#'
+#' Only samples resolved down to the species level are included.
 #'
 #'
 #' @param data_dir Directory to cache SeaAroundUs data
 #' @param sau_groups Character Vector of SeaAroundUs groups. Defaults to pelagic groups
 #' @param extra_sau_sp Character Vector of additional SeaAroundUs species. Defaults to pelagic sharks.
+#' @param bouning_wkt Well Known Text string representation of a polygon or multipolygon. Calling st_as_text() on an sf
+#' object will produce valid WKT.
+#' @param chunk_size Integer indicating how many cells to fetch in a single call. Too small will slow down the download process, too large will cause server timeouts.
 #' @param years Integer range of years from 1950 to 2014. Defaults to 2010
+#'
 import_seaaroundus_bio <- function(data_dir = "/vmshare/phd/data/SeaAroundUs/ausEEZcatches.rds",
                                    sau_groups = c("pelagiclg", "pelagicmd", "pelagicsm"),
                                    extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
                                                         "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
                                                         "Alopias superciliosus", "Lamna nasus",
                                                         "Emmelichthys nitidus nitidus"),
+                                   bounding_wkt = NULL,
+                                   chunk_size = 100,
                                    years = 2010){
 
-  if(strsplit(x =basename(data_dir), split = "\\.")[[1]][2] != "rds" | is.na(strsplit(x =basename(data_dir), split = "\\.")[[1]][2])){
+  raw_data <- download_seaaroundus_bio(data_dir = data_dir, bounding_wkt = bounding_wkt,
+                                       chunk_size = chunk_size, years = years)
 
-    stop("import_seaaroundus_bio is still under development, and must have an RDS file.")
-  }
-
-  raw_data <- readRDS(data_dir)
-  pelagic_sp_names <- unique(raw_data[raw_data$functional_group_name %in% sau_groups & grepl("^\\S+\\s{1}\\S+$", raw_data$taxon_scientific_name),"taxon_scientific_name"])
-  pelagic_sp_total <- c(pelagic_sp_names, extra_sau_sp)
+  sp_group_names <- unique(raw_data[raw_data$functional_group_name %in% sau_groups & grepl("^\\S+\\s{1}\\S+$", raw_data$taxon_scientific_name),"taxon_scientific_name"])
+  sp_total <- c(sp_group_names, extra_sau_sp)
 
   site_sp <- reshape2::dcast(
-    raw_data[raw_data$taxon_scientific_name %in% pelagic_sp_total & raw_data$year %in% years,
+    raw_data[raw_data$taxon_scientific_name %in% sp_total & raw_data$year %in% years,
              c("cell_id", "taxon_scientific_name", "catch_sum")],
     formula = cell_id ~ taxon_scientific_name, value.var = "catch_sum",
     fun.aggregate = mean, fill = 0)
@@ -131,6 +133,99 @@ import_seaaroundus_bio <- function(data_dir = "/vmshare/phd/data/SeaAroundUs/aus
   result$sp_names <- valid_sp_names
   return(result)
 }
+
+#' helper function to get SeaAroundUs cells
+#'
+#' either download or fetch from cache
+#'
+#'
+#'
+#' @param data_dir Directory to cache SeaAroundUs data
+#' @param bouning_wkt Well Known Text string representation of a polygon or multipolygon. Calling st_as_text() on an sf
+#' object will produce valid WKT.
+#' @param chunk_size Integer indicating how many cells to fetch in a single call. Too small will slow down the download process, too large will cause server timeouts.
+#' @param years Integer range of years from 1950 to 2014. Defaults to 2010
+#'
+#' @return SeaAroundUs formatted data.frame
+#'
+#' @importFrom foreach foreach %:% %dopar% %do%
+download_seaaroundus_bio <- function(data_dir = "/vmshare/phd/data/SeaAroundUs/cache",
+                                     bounding_wkt = NULL,
+                                     chunk_size = 100,
+                                     years = 2010){
+  if(is.null(bounding_wkt)){
+    stop("Please provide a WKT string as a boundary box")
+  }
+
+  if(dir.exists(data_dir) == FALSE){
+    stop("SeaAroundUs cache dir does not exist.")
+
+  }
+  cells <- seaaroundus::getcells(shape = bounding_wkt, check_wkt = TRUE)
+
+  cell_chunks <- split(cells, f = ceiling(seq_along(cells)/chunk_size))
+
+  #fetch only first year, to identify and exclude land cells.
+
+  sau_base <- foreach(year = years[1], .combine="rbind", .inorder = FALSE) %:%
+    foreach(chunk=cell_chunks, .combine="rbind", .packages = c("seaaroundus"), .inorder = FALSE) %do% {
+      ch_hash <- digest::digest(list(chunk, year))
+      if(file.exists(sprintf("%s/chunk_%s.rds", data_dir, ch_hash)) == FALSE){
+        message(sprintf("Downloading year %d, cells %s.", year, paste(as.character(chunk),collapse = ", ")))
+
+        ##Don't crash the servers
+        Sys.sleep(runif(1)/4)
+
+        cell_data <- seaaroundus::getcelldata(year = year, cells = chunk)
+        message("saving cells")
+        saveRDS(cell_data, sprintf("%s/chunk_%s.rds", data_dir, ch_hash))
+      } else {
+        message(sprintf("Cache exists for Year %d, cells %s", year, paste(as.character(chunk),collapse = ", ")))
+
+        cell_data <- readRDS(sprintf("%s/chunk_%s.rds", data_dir, ch_hash))
+      }
+
+      return(cell_data)
+
+    }
+
+
+
+  all_valid <- unique(sau_base$cell_id)
+
+  cell_chunks <- split(all_valid, f = ceiling(seq_along(all_valid)/chunk_size))
+
+  if (length(years) > 1){
+    sau_all <- foreach(year = years[-1], .combine="rbind", .inorder = FALSE) %:%
+      foreach(chunk=cell_chunks, .combine="rbind", .packages = c("seaaroundus"), .inorder = FALSE) %do% {
+        ch_hash <- digest::digest(list(chunk, year))
+        if(file.exists(sprintf("%s/chunk_%s.rds", data_dir, ch_hash)) == FALSE){
+          message(sprintf("Downloading year %d, cells %s", year, paste(as.character(chunk),collapse = ", ")))
+
+          ##Don't crash the servers
+          Sys.sleep(runif(1)/4)
+
+          cell_data <- seaaroundus::getcelldata(year = year, cells = chunk)
+          message("saving cells")
+          saveRDS(cell_data, sprintf("%s/chunk_%s.rds", data_dir, ch_hash))
+        } else {
+          message(sprintf("Cache exists for Year %d, cells %s", year, paste(as.character(chunk),collapse = ", ")))
+
+          cell_data <- readRDS(sprintf("%s/chunk_%s.rds", data_dir, ch_hash))
+        }
+
+        return(cell_data)
+
+      }
+
+  } else {
+    sau_all <- sau_base
+  }
+
+  return(sau_all)
+
+}
+
 
 #' helper function to convert SeaAroundUs IDs to lat and lon values
 sau_id_to_lat_lon <- function(cellId, gridSize = 0.5, centred = TRUE){

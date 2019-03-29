@@ -21,6 +21,7 @@ Imports:
   reshape2 (>= 1.4.3)
 Suggests:
   MASS,
+  seaaroundus,
   sdmpredictors,
   testthat
 RoxygenNote: 6.1.1
