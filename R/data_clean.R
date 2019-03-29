@@ -12,10 +12,11 @@
 #' @param in_file Pathe to the original CSV file. Default "/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv"
 #' @param date_format lubridate::parse_date_time() orders string for converting dates into standard R format. Defaults to "ymd HMS"
 #'
-#' @return A list containing:
-#'   \item{data}{A site by species data_frame. Metadata columns "lat", "lon" and "date",
+#' @return A list containing: \describe{
+#'   \item{\code{data}}{A site by species data_frame. Metadata columns "lat", "lon" and "date",
 #'   and one column per species.}
-#'   \item{sp_names}{Names of species columns in \code{data}}
+#'   \item{\code{sp_names}}{Names of species columns in \code{data}}
+#'  }
 
 convert_csiro_cpr_copepod <- function(in_file ="/vmshare/phd/data/CSIRO_cpr/cpr_copepods_matrix.csv",
                                       date_format = "ymd HMS"){

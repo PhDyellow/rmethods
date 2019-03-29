@@ -12,7 +12,7 @@ plot_cluster_pairs(dataset, cluster_model, level = 0.683,
 
 \item{cluster_model}{Cluster model (currently mclust) fitted to \code{dataset}}
 
-\item{level}{The heigth of the contour line for the ellipses. Defaults to 68.3%, or 1 standard deviation from the mean}
+\item{level}{The heigth of the contour line for the ellipses. Defaults to 68.3\% or 1 standard deviation from the mean}
 
 \item{legend_thres}{When the number of clusters exceeds legend_thres, the legend is not plotted}
 

@@ -10,7 +10,7 @@
   extra_sau_sp = c("Prionace glauca", "Carcharhinus longimanus",
   "Sphyrna lewini", "Sphyrna zygaena", "Alopias vulpinus",
   "Alopias superciliosus", "Lamna nasus", "Emmelichthys nitidus nitidus"),
-  years = 2010)
+  bounding_wkt = NULL, chunk_size = 100, years = 2010)
 }
 \arguments{
 \item{data_dir}{Directory to cache SeaAroundUs data}
@@ -19,11 +19,16 @@
 
 \item{extra_sau_sp}{Character Vector of additional SeaAroundUs species. Defaults to pelagic sharks.}
 
+\item{chunk_size}{Integer indicating how many cells to fetch in a single call. Too small will slow down the download process, too large will cause server timeouts.}
+
 \item{years}{Integer range of years from 1950 to 2014. Defaults to 2010}
+
+\item{bouning_wkt}{Well Known Text string representation of a polygon or multipolygon. Calling st_as_text() on an sf
+object will produce valid WKT.}
 }
 \description{
 Pull in SeaAroundUs data and clean up to site by species matrix
 }
 \details{
-For now, just an RDS file, function is not accessing SeaAroundUs servers or a local cache.
+Only samples resolved down to the species level are included.
 }

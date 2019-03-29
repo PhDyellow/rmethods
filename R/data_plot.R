@@ -164,7 +164,7 @@ plot_maps_points <- function(dataset, lat_col, lon_col, sf_poly = NULL){
 #'
 #' @param dataset A data.frame of variables to plot.
 #' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
-#' @param level The heigth of the contour line for the ellipses. Defaults to 68.3%, or 1 standard deviation from the mean
+#' @param level The heigth of the contour line for the ellipses. Defaults to 68.3\% or 1 standard deviation from the mean
 #' @param legend_thres When the number of clusters exceeds legend_thres, the legend is not plotted
 #' @param alpha Alpha value of scatterplot points
 #'
@@ -210,7 +210,7 @@ plot_cluster_pairs <- function(dataset, cluster_model,  level = 0.683, legend_th
 #' @param col_x Column name for x axis
 #' @param col_y Column name for y axis
 #' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
-#' @param level The heigth of the contour line for the ellipses. Defaults to 68.3%, or 1 standard deviation from the mean
+#' @param level The heigth of the contour line for the ellipses. Defaults to 68.3\%, or 1 standard deviation from the mean
 #' @param legend_thres When the number of clusters exceeds legend_thres, the legend is not plotted
 #' @param alpha Alpha value of scatterplot points
 #'

@@ -14,10 +14,11 @@
 \item{date_format}{lubridate::parse_date_time() orders string for converting dates into standard R format. Defaults to "ymd HMS"}
 }
 \value{
-A list containing:
-  \item{data}{A site by species data_frame. Metadata columns "lat", "lon" and "date",
+A list containing: \describe{
+  \item{\code{data}}{A site by species data_frame. Metadata columns "lat", "lon" and "date",
   and one column per species.}
-  \item{sp_names}{Names of species columns in \code{data}}
+  \item{\code{sp_names}}{Names of species columns in \code{data}}
+ }
 }
 \description{
 Takes the CSIRO CPR copepod data in CSV form and converts it into
