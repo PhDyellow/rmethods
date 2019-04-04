@@ -315,6 +315,55 @@ plot_cluster_map <- function(dataset, col_x = "lon", col_y = "lat",
 
 }
 
+#' Plot clusters individually, coloured by confidence
+#'
+#' Generates a list of ggplot objects, one per cluster.
+#'
+#' Each cluster is plotted alone, showing the sites each cluster is associated with, and how strongly the
+#' site associates with each cluster.
+#'
+#' Across all clusters, each site membership sums to 1
+#'
+#' @param dataset A dataframe of observations with an associated fitted model
+#' @param col_x Column name for x axis
+#' @param col_y Column name for y axis
+#' @param depth_col Column name for bathymetry
+#' @param depth_contour Vector of depths used for contour lines.
+#' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
+#' @param sf_poly A polygon of class sf for plotting on the map.
+#'
+#' @return A ggplot object. The ggplot object is not printed
+#'
+#' @importFrom foreach foreach %do%
+plot_cluster_own <- function(dataset, col_x = "lon", col_y = "lat",
+                             depth_col = NULL, depth_contour = NULL,
+                             cluster_model, sf_poly = NULL){
+  classification <- predict(cluster_model, dataset[, colnames(cluster_model$data)])
+  map_plots <- foreach(i = 1:cluster_model$G) %do% {
+    pl <- ggplot2::ggplot(data= data.frame(dataset[,c(col_x, col_y)], z =  classification$z[,i]),
+                          ggplot2::aes_string(x = col_x, y = col_y, fill = "z")) +
+      ggplot2::geom_raster()  +
+      ggplot2::scale_fill_viridis_c(limits=c(0,1))  +
+      ggplot2::labs(fill = "z") +
+      ggplot2::coord_sf()+
+      ggthemes::theme_tufte()
+
+    if(!is.null(sf_poly)){
+      pl <- pl +  ggplot2::geom_sf(data = sf_poly, inherit.aes = FALSE, color = "black", fill= NA)
+    }
+
+    if(!is.null(depth_col) & !is.null(depth_contour)){
+      pl <- pl + ggplot2::geom_contour(data = dataset[, c(col_x, col_y, depth_col)],
+                                       mapping = ggplot2::aes_string(x=col_x, y=col_y, z=depth_col), inherit.aes = FALSE, breaks = depth_contour)
+    }
+
+    return(pl)
+  }
+
+  return(map_plots)
+
+}
+
 #' Plot cluster map, but hide sites with low confidence
 plot_cluster_map_ci <- function(x, rawx, cluster_model, legend_thres = 10, landPoly, confThres){
   stop("not implemented yet")
