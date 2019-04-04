@@ -168,4 +168,14 @@ test_that("Test pair plotting", {
 
   )
   expect_known_hash(pairs_test, hash = "2244657156")
+  sub_vars <- 3
+  expect_length(plot_cluster_pairs(test_data, clust, plot_vars = letters[1:sub_vars],
+                                   level = 0.683, legend_thres = 10, alpha=0.3),
+                sub_vars*(sub_vars-1)/2)
+  expect_type(plot_cluster_pairs(test_data, clust, plot_vars = letters[1:sub_vars],
+                                 level = 0.683, legend_thres = 10, alpha=0.3),
+              "list")
+  expect_s3_class(plot_cluster_pairs(test_data, clust, plot_vars = letters[1:sub_vars],
+                                     level = 0.683, legend_thres = 10, alpha=0.3)[[1]],
+                  "ggplot")
 })

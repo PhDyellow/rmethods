@@ -164,13 +164,19 @@ plot_maps_points <- function(dataset, lat_col, lon_col, sf_poly = NULL){
 #'
 #' @param dataset A data.frame of variables to plot.
 #' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
+#' @param plots_vars Character vector of variables to plot. Defaults to all variables fitted in cluster_model
 #' @param level The heigth of the contour line for the ellipses. Defaults to 68.3\% or 1 standard deviation from the mean
 #' @param legend_thres When the number of clusters exceeds legend_thres, the legend is not plotted
 #' @param alpha Alpha value of scatterplot points
 #'
 #' @return A list of ggplot object. The ggplot objects are not printed
-plot_cluster_pairs <- function(dataset, cluster_model,  level = 0.683, legend_thres = 10, alpha=0.3){
-  dNames <- colnames(cluster_model$data)
+plot_cluster_pairs <- function(dataset, cluster_model, plot_vars = NULL,  level = 0.683, legend_thres = 10, alpha=0.3){
+  if(is.null(plot_vars)){
+    dNames <- colnames(cluster_model$data)
+  } else {
+    dNames <- plot_vars
+  }
+
   cluster_pair_plots <- mapply(
     FUN = function(v1, v2, dataset, cluster_model, level, legend_thres, alpha){
       dNames <- colnames(cluster_model$data)
