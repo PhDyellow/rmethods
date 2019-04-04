@@ -114,10 +114,13 @@ plot_maps_raster <- function(dataset, lat_col, lon_col, sf_poly = NULL){
   map_plots <- lapply(X = dNames, FUN = function(x, dataset){
     map_plot <- ggplot2::ggplot(data= dataset[,c(x, lon_col, lat_col)], ggplot2::aes_string(x = lon_col, y = lat_col, fill = x)) +
       ggplot2::geom_raster()  +
-      ggplot2::geom_sf(data = sf_poly, inherit.aes = FALSE, color = "black", fill= NA) +
       ggplot2::labs(fill = x) +
       ggplot2::coord_sf()+
       ggthemes::theme_tufte()
+
+    if(!is.null(sf_poly)){
+      map_plot <- map_plot +  ggplot2::geom_sf(data = sf_poly, inherit.aes = FALSE, color = "black", fill= NA)
+    }
     return(map_plot)
   }, dataset=dataset)
   return(map_plots)
@@ -148,10 +151,13 @@ plot_maps_points <- function(dataset, lat_col, lon_col, sf_poly = NULL){
                           ggplot2::aes_string(x = lon_col, y = lat_col), size = .25, colour = "grey")  +
       ggplot2::geom_point(colour = "blue")  +
       ggplot2::scale_size_area(max_size = 5) +
-      ggplot2::geom_sf(data = sf_poly,inherit.aes = FALSE, color = "black", fill= NA) +
       ggplot2::labs(fill = x) +
       ggplot2::coord_sf()+
       ggthemes::theme_tufte()
+
+    if(!is.null(sf_poly)){
+      point_plot <- point_plot + ggplot2::geom_sf(data = sf_poly,inherit.aes = FALSE, color = "black", fill= NA)
+    }
     return(point_plot)
   }, dataset=dataset)
   return(point_plots)
@@ -286,9 +292,12 @@ plot_cluster_map <- function(dataset, col_x = "lon", col_y = "lat",
     ggplot2::scale_fill_manual(values = rainbow(cluster_model$G))  +
     ggplot2::geom_raster(hjust = 0, vjust = 1) +
     ggplot2::labs(fill = "cluster") +
-    ggplot2::geom_sf(data = sf_poly, inherit.aes = FALSE, color = "black", fill= NA) +
     ggplot2::coord_sf()+
     ggthemes::theme_tufte()
+
+  if(!is.null(sf_poly)){
+    pl <- pl +  ggplot2::geom_sf(data = sf_poly, inherit.aes = FALSE, color = "black", fill= NA)
+  }
 
   if(!is.null(depth_col) & !is.null(depth_contour)){
     pl <- pl + ggplot2::geom_contour(data = dataset[, c(col_x, col_y, depth_col)],
