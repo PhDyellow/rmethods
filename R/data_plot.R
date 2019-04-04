@@ -244,8 +244,8 @@ plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, l
                                                                       color=as.factor(classification$classification))) +
     ggplot2::scale_colour_manual(values = rainbow(cluster_model$G))  +
     ggplot2::geom_point(size = 0.5) +
-    ggplot2::geom_path(data = ellipse_points, mapping = aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points$g)), inherit.aes = FALSE) +
-    ggplot2::geom_polygon(data = ellipse_points, mapping = aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points$g)), alpha = alpha,  inherit.aes = FALSE) +
+    ggplot2::geom_path(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points$g)), inherit.aes = FALSE) +
+    ggplot2::geom_polygon(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points$g)), alpha = alpha,  inherit.aes = FALSE) +
     ggthemes::theme_tufte()+
     ggplot2::coord_fixed()
 
