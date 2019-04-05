@@ -52,11 +52,59 @@ test_that("ellipse plots work", {
                   units = "cm"
 
   )
-  expect_known_hash(plot_clusters_test, hash = "68296b1c1b")
+  expect_known_hash(plot_clusters_test, hash = "ff3ac3f61b")
 })
 
+set.seed(20190322)
+test_size <- 100
+
+test_data <- rbind(MASS::mvrnorm(n = test_size, mu = c(1,1,1,1), Sigma = diag(4)*.2),
+                   MASS::mvrnorm(n = test_size, mu = c(1,1,1,-1), Sigma = diag(4)*.6),
+                   MASS::mvrnorm(n = test_size, mu = c(1,1,-1,-1), Sigma = diag(4)*.2),
+                   MASS::mvrnorm(n = test_size, mu = c(1,1,-1,1), Sigma = diag(4)*.1))
+test_data <- as.data.frame(test_data)
+names(test_data) <- c("x", "y", "z", "t")
 
 
+
+clust <- mclust::Mclust(data = test_data, G = 4, modelNames = "VVI")
+
+test_that("PCA projection of both data and ellipses is working", {
+  expect_s3_class(plot_clusters_project(dataset = test_data, transform = "pca",
+                                cluster_model = clust, level = 0.683, legend_thres = 10, alpha=0.3),
+                  "ggplot")
+  set.seed(1000)
+
+  plot_clusters_test <-plot_clusters_project(dataset = test_data, transform = "pca",
+                                     cluster_model = clust, level = 0.683, legend_thres = 10, alpha=0.3)
+  ggplot2::ggsave(filename = "tmp.png",
+                  plot = plot_clusters_test,
+                  path = test_plot_dir,
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
+  )
+  unlink(paste0(test_plot_dir, "/tmp.png"))
+  current_hash <- substring(digest::digest(plot_clusters_test), 1, 10)
+  ggplot2::ggsave(filename = paste0("plot_clusters_project_test_",
+                                    format(Sys.time(), "%Y-%m-%d"),
+                                    "_",
+                                    current_hash,
+                                    ".png"),
+                  plot = plot_clusters_test,
+                  path = test_plot_dir,
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
+  )
+  expect_known_hash(plot_clusters_test, hash = "026d6681b8")
+
+
+})
 
 global_map <- sf::st_read("/vmshare/phd/data/World_EEZ_v8_20140228", layer = "World_EEZ_v8_2014_HR")
 country <- "Australia"
@@ -167,7 +215,7 @@ test_that("Test pair plotting", {
                   units = "cm"
 
   )
-  expect_known_hash(pairs_test, hash = "2244657156")
+  expect_known_hash(pairs_test, hash = "ae9f7f3196")
   sub_vars <- 3
   expect_length(plot_cluster_pairs(test_data, clust, plot_vars = letters[1:sub_vars],
                                    level = 0.683, legend_thres = 10, alpha=0.3),

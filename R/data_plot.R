@@ -258,6 +258,73 @@ plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, l
   return(pl)
 }
 
+#' Project and Plot clustered data with cluster ellipses
+#'
+#' Produces a scatter plot of the clustered data,
+#' coloured by cluster and projected onto the first two PCA axes.
+#' Clusters are shown
+#' as ellipses at the 1 standard deviation contour line.
+#' If not all columns in dataset were used for fitting the
+#' cluster model, the relevant columns will be read from
+#' the cluster_model
+#'
+#' @param dataset A dataframe of observations
+#' @param transform A string indicating transform to use from c("pca"). Defaults to "pca"
+#' @param cluster_model Cluster model (currently mclust) fitted to \code{dataset}
+#' @param level The heigth of the contour line for the ellipses. Defaults to 68.3\%, or 1 standard deviation from the mean
+#' @param legend_thres When the number of clusters exceeds legend_thres, the legend is not plotted
+#' @param alpha Alpha value of scatterplot points
+#'
+#' @return A ggplot object. The ggplot object is not printed
+#'
+#' @importFrom foreach foreach %do%
+plot_clusters_project <- function(dataset, transform = c("pca"),
+                                  cluster_model, level = 0.683, legend_thres = 10, alpha=0.3){
+
+  #Get projection
+  trans <- prcomp(dataset[, colnames(cluster_model$data)])
+
+  #Transform data and ellipses
+
+  #https://math.stackexchange.com/questions/332441/affine-transformation-applied-to-a-multivariate-gaussian-random-variable-what
+  #https://stats.stackexchange.com/questions/2592/how-to-project-a-new-vector-onto-pca-space
+  trans_clusters <- list()
+
+  combine_func <- function(...){abind::abind(..., along = 3)}
+  trans_clusters$sigma <- foreach(i = 1:dim(cluster_model$parameters$variance$sigma)[3], .combine = combine_func) %do% {
+    trans$rotation %*% cluster_model$parameters$variance$sigma[,,i] %*% t(trans$rotation)
+
+  }
+  trans_clusters$mean = predict(trans, t(cluster_model$parameters$mean))
+
+
+  #generate ellipses
+  ellipse_points <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
+    ellipse_points <- ellipse::ellipse(x = trans_clusters$sigma[,,i], centre = trans_clusters$mean[i,], level = level^2)
+    ellipse_points <- as.data.frame(ellipse_points)
+    ellipse_points <- cbind(ellipse_points, data.frame(g=i))
+  }
+
+  classification <- predict(cluster_model, dataset[, colnames(cluster_model$data)])
+  col_x <- colnames(cluster_model$data)[1]
+  col_y <- colnames(cluster_model$data)[2]
+  pl <- ggplot2::ggplot(data = as.data.frame(trans$x[,1:2]), mapping = ggplot2::aes_string(x="PC1", y="PC2",
+                                                                      color=as.factor(classification$classification))) +
+    ggplot2::scale_colour_manual(values = rainbow(cluster_model$G))  +
+    ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_path(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points$g)), inherit.aes = FALSE) +
+    ggplot2::geom_polygon(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points$g)), alpha = alpha,  inherit.aes = FALSE) +
+    ggthemes::theme_tufte()+
+    ggplot2::coord_fixed()
+
+  if (cluster_model$G <= legend_thres){
+    pl <- pl + ggplot2::guides(color=FALSE ) +  ggplot2::labs(fill = "Cluster")
+  } else {
+    pl <- pl + ggplot2::guides(color=FALSE, fill=FALSE )
+  }
+
+  return(pl)
+}
 
 
 
