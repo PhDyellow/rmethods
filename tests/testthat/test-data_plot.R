@@ -7,7 +7,7 @@ dir.create(test_plot_dir, showWarnings = FALSE)
 
 bio_data <- archivist::loadFromLocalRepo("a38d13707ac343e705a54297842d7157",
                                          value = TRUE,
-                                         repoDir = "/vmshare/phd/projects/aus_bioregions/experiments/2019-03-08-1035/archivist/")
+                                         repoDir = "/vmshare/phd/projects/aus_bioregions/experiments/2019-03-08-1035_data_csiro_copepod/archivist/")
 
 
 
