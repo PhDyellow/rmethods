@@ -52,7 +52,7 @@ test_that("ellipse plots work", {
                   units = "cm"
 
   )
-  expect_known_hash(plot_clusters_test, hash = "ff3ac3f61b")
+  expect_known_hash(plot_clusters_test, hash = "c8d3e846ca")
 })
 
 set.seed(20190322)
@@ -101,7 +101,7 @@ test_that("PCA projection of both data and ellipses is working", {
                   units = "cm"
 
   )
-  expect_known_hash(plot_clusters_test, hash = "026d6681b8")
+  expect_known_hash(plot_clusters_test, hash = "5cbe0ee354")
 
 
 })
@@ -111,7 +111,7 @@ country <- "Australia"
 bounding_poly  <- global_map[global_map$Country == country,]
 
 library(archivist)
-env_trans_hash <- "/vmshare/phd/projects/aus_bioregions/experiments/2019-03-21-1330/archivist/119074835a617f36e24e02d5022dea6b" # in "path/hash" format
+env_trans_hash <- "/vmshare/phd/projects/aus_bioregions/experiments/2019-03-21-1330_model_gf_sau_2010_aus_eez/archivist/119074835a617f36e24e02d5022dea6b" # in "path/hash" format
 env_trans <- archivist::loadFromLocalRepo(repoDir = dirname(env_trans_hash), md5hash = basename(env_trans_hash), value = TRUE)
 
 set.seed(20190322)
@@ -165,7 +165,7 @@ test_that("Clusters maps plot properly", {
 
   #Buffer size failure
   expect_known_hash(plot_cluster_map(dataset = test_data_spatial, col_x = "x", col_y ="y",
-                                     cluster_model = clust, legend_thres = 10, sf_poly= bounding_poly), hash = "6b5e8dc891")
+                                     cluster_model = clust, legend_thres = 10, sf_poly= bounding_poly), hash = "fa40bde7a6")
 
 })
 
@@ -215,7 +215,7 @@ test_that("Test pair plotting", {
                   units = "cm"
 
   )
-  expect_known_hash(pairs_test, hash = "ae9f7f3196")
+  expect_known_hash(pairs_test, hash = "cd04c2fb17")
   sub_vars <- 3
   expect_length(plot_cluster_pairs(test_data, clust, plot_vars = letters[1:sub_vars],
                                    level = 0.683, legend_thres = 10, alpha=0.3),

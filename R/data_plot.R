@@ -218,6 +218,10 @@ plot_cluster_pairs <- function(dataset, cluster_model, plot_vars = NULL,  level 
 #' cluster model, the relevant columns will be read from
 #' the cluster_model
 #'
+#' Because each Gaussian is scaled by the unconditioned prior, pi, two curves are plotted.
+#'
+#' The solid filled curve is scaled by pi, and the dashed curve shows the ellipse before scaling by pi.
+#'
 #' @param dataset A dataframe of observations
 #' @param col_x Column name for x axis
 #' @param col_y Column name for y axis
@@ -232,8 +236,19 @@ plot_cluster_pairs <- function(dataset, cluster_model, plot_vars = NULL,  level 
 plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, legend_thres = 10, alpha=0.3){
 
   #generate ellipses
-  ellipse_points <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
-    ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[c(col_x, col_y),c(col_x, col_y),i], centre = cluster_model$parameters$mean[c(col_x, col_y),i], level = level^2)
+  ellipse_points_independent <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
+    ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[c(col_x, col_y),c(col_x, col_y),i],
+                                       centre = cluster_model$parameters$mean[c(col_x, col_y),i],
+                                       level = level)
+    ellipse_points <- as.data.frame(ellipse_points)
+    ellipse_points <- cbind(ellipse_points, data.frame(g=i))
+  }
+
+  #generate ellipses
+  ellipse_points_scaled_pi <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
+    ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[c(col_x, col_y),c(col_x, col_y),i],
+                                       centre = cluster_model$parameters$mean[c(col_x, col_y),i],
+                                       level = (cluster_model$parameters$pro[i]*level))
     ellipse_points <- as.data.frame(ellipse_points)
     ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
@@ -244,8 +259,9 @@ plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, l
                                                                       color=as.factor(classification$classification))) +
     ggplot2::scale_colour_manual(values = rainbow(cluster_model$G))  +
     ggplot2::geom_point(size = 0.5) +
-    ggplot2::geom_path(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points$g)), inherit.aes = FALSE) +
-    ggplot2::geom_polygon(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points$g)), alpha = alpha,  inherit.aes = FALSE) +
+    ggplot2::geom_path(data = ellipse_points_scaled_pi, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points_scaled_pi$g)), inherit.aes = FALSE) +
+    ggplot2::geom_polygon(data = ellipse_points_scaled_pi, mapping = ggplot2::aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points_scaled_pi$g)), alpha = alpha,  inherit.aes = FALSE) +
+    ggplot2::geom_path(data = ellipse_points_independent, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points_independent$g)), inherit.aes = FALSE, linetype = 2) +
     ggthemes::theme_tufte()+
     ggplot2::coord_fixed()
 
@@ -296,11 +312,23 @@ plot_clusters_project <- function(dataset, transform = c("pca"),
 
   }
   trans_clusters$mean = predict(trans, t(cluster_model$parameters$mean))
+  trans_clusters$pro = cluster_model$parameters$pro
 
 
   #generate ellipses
-  ellipse_points <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
-    ellipse_points <- ellipse::ellipse(x = trans_clusters$sigma[,,i], centre = trans_clusters$mean[i,], level = level^2)
+  ellipse_points_independent <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
+    ellipse_points <- ellipse::ellipse(x = trans_clusters$sigma[,,i],
+                                       centre = trans_clusters$mean[i,],
+                                       level = level)
+    ellipse_points <- as.data.frame(ellipse_points)
+    ellipse_points <- cbind(ellipse_points, data.frame(g=i))
+  }
+
+  #generate ellipses
+  ellipse_points_scaled_pi <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
+    ellipse_points <- ellipse::ellipse(x = trans_clusters$sigma[,,i],
+                                       centre = trans_clusters$mean[i,],
+                                       level = (trans_clusters$pro[i]*level))
     ellipse_points <- as.data.frame(ellipse_points)
     ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
@@ -312,8 +340,9 @@ plot_clusters_project <- function(dataset, transform = c("pca"),
                                                                       color=as.factor(classification$classification))) +
     ggplot2::scale_colour_manual(values = rainbow(cluster_model$G))  +
     ggplot2::geom_point(size = 0.5) +
-    ggplot2::geom_path(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points$g)), inherit.aes = FALSE) +
-    ggplot2::geom_polygon(data = ellipse_points, mapping = ggplot2::aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points$g)), alpha = alpha,  inherit.aes = FALSE) +
+    ggplot2::geom_path(data = ellipse_points_scaled_pi, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points_scaled_pi$g)), inherit.aes = FALSE) +
+    ggplot2::geom_polygon(data = ellipse_points_scaled_pi, mapping = ggplot2::aes_string(x=col_x, y=col_y, fill = as.factor(ellipse_points_scaled_pi$g)), alpha = alpha,  inherit.aes = FALSE) +
+    ggplot2::geom_path(data = ellipse_points_independent, mapping = ggplot2::aes_string(x=col_x, y=col_y, color = as.factor(ellipse_points_independent$g)), inherit.aes = FALSE, linetype = 2) +
     ggthemes::theme_tufte()+
     ggplot2::coord_fixed()
 
