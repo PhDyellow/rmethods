@@ -53,8 +53,12 @@ scores <- foreach::foreach(g = n_groups, .combine = map_wrap) %:%
 
     if(!is.null(icl_test$warnings)){
       #Warning in tryCatch loop, usually empty cluster, sometimes fitting singularity
-      message(paste0("Discarded ", g, ", because:", icl_test$warnings))
-      return(list(groups = g, icl = max(icl_test$value), type = "empty", fit = list(NA)))
+      #I will keep "no assignment" errors, but not others
+      if(length(icl_test$warnings) > 1 | grepl(pattern = "^no assignment", x = icl_test$warnings[[1]]$message)){
+        message(paste0("Discarded ", g, ", because:", icl_test$warnings))
+        return(list(groups = g, icl = max(icl_test$value), type = "empty", fit = list(NA)))
+      }
+
     }
 
 
@@ -64,8 +68,10 @@ scores <- foreach::foreach(g = n_groups, .combine = map_wrap) %:%
 
     if(!is.null(mclust_fit$warnings)){
       #Warning in tryCatch loop, usually empty cluster, sometimes fitting singularity
-      message(paste0("Discarded ", g, ", because:", mclust_fit$warnings))
-      return(list(groups = g, icl = max(icl_test$value), type = "empty2", fit = list(NA)))
+      if(length(icl_test$warnings) > 1 | grepl(pattern = "^no assignment", x = icl_test$warnings[[1]]$message)){
+        message(paste0("Discarded ", g, ", because:", mclust_fit$warnings))
+        return(list(groups = g, icl = max(icl_test$value), type = "empty2", fit = list(NA)))
+      }
     }
     mclust_fit <- mclust_fit$value
 
