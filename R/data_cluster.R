@@ -48,6 +48,7 @@ map_wrap <- function(...){mapply(c, SIMPLIFY = FALSE, ...)}
 
 scores <- foreach::foreach(g = n_groups, .combine = map_wrap) %:%
   foreach::foreach(i = 1:n_iter, .combine = map_wrap, .packages = c("mclust", "rmethods")) %dopar% {
+    message(paste0("Fitting, G = ", g, ", iteration ", i))
 
     icl_test <- rmethods::withWarnings(mclust::mclustICL(data, G = g, modelNames = mclust_model, warn = TRUE))
 
