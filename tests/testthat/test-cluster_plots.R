@@ -10,8 +10,8 @@ dir.create(test_plot_dir, showWarnings = FALSE)
 set.seed(20190322)
 test_size <- 100
 
-test_data <- rbind(MASS::mvrnorm(n = test_size, mu = c(1,1), Sigma = diag(2)*.2),
-                   MASS::mvrnorm(n = test_size, mu = c(1,-1), Sigma = diag(2)*.6),
+test_data <- rbind(MASS::mvrnorm(n = test_size/2, mu = c(1,1), Sigma = diag(2)*.2),
+                   MASS::mvrnorm(n = test_size*2, mu = c(1,-1), Sigma = diag(2)*.6),
                    MASS::mvrnorm(n = test_size, mu = c(-1,-1), Sigma = diag(2)*.2),
                    MASS::mvrnorm(n = test_size, mu = c(-1,1), Sigma = diag(2)*.1))
 test_data <- as.data.frame(test_data)
@@ -52,14 +52,14 @@ test_that("ellipse plots work", {
                   units = "cm"
 
   )
-  expect_known_hash(plot_clusters_test, hash = "c8d3e846ca")
+  expect_known_hash(plot_clusters_test, hash = "e21ffeb639")
 })
 
 set.seed(20190322)
 test_size <- 100
 
-test_data <- rbind(MASS::mvrnorm(n = test_size, mu = c(1,1,1,1), Sigma = diag(4)*.2),
-                   MASS::mvrnorm(n = test_size, mu = c(1,1,1,-1), Sigma = diag(4)*.6),
+test_data <- rbind(MASS::mvrnorm(n = test_size/2, mu = c(1,1,1,1), Sigma = diag(4)*.2),
+                   MASS::mvrnorm(n = test_size*2, mu = c(1,1,1,-1), Sigma = diag(4)*.6),
                    MASS::mvrnorm(n = test_size, mu = c(1,1,-1,-1), Sigma = diag(4)*.2),
                    MASS::mvrnorm(n = test_size, mu = c(1,1,-1,1), Sigma = diag(4)*.1))
 test_data <- as.data.frame(test_data)
@@ -101,7 +101,7 @@ test_that("PCA projection of both data and ellipses is working", {
                   units = "cm"
 
   )
-  expect_known_hash(plot_clusters_test, hash = "5cbe0ee354")
+  expect_known_hash(plot_clusters_test, hash = "2785b2e748")
 
 
 })
@@ -215,7 +215,7 @@ test_that("Test pair plotting", {
                   units = "cm"
 
   )
-  expect_known_hash(pairs_test, hash = "cd04c2fb17")
+  expect_known_hash(pairs_test, hash = "731fc1e6f2")
   sub_vars <- 3
   expect_length(plot_cluster_pairs(test_data, clust, plot_vars = letters[1:sub_vars],
                                    level = 0.683, legend_thres = 10, alpha=0.3),

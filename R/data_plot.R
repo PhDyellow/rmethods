@@ -235,11 +235,12 @@ plot_cluster_pairs <- function(dataset, cluster_model, plot_vars = NULL,  level 
 #' @importFrom foreach foreach %do%
 plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, legend_thres = 10, alpha=0.3){
 
+  level_scaled <- level/cluster_model$G
   #generate ellipses
   ellipse_points_independent <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
     ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[c(col_x, col_y),c(col_x, col_y),i],
                                        centre = cluster_model$parameters$mean[c(col_x, col_y),i],
-                                       level = level)
+                                       level = level_scaled)
     ellipse_points <- as.data.frame(ellipse_points)
     ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
@@ -248,7 +249,7 @@ plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, l
   ellipse_points_scaled_pi <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
     ellipse_points <- ellipse::ellipse(x = cluster_model$parameters$variance$sigma[c(col_x, col_y),c(col_x, col_y),i],
                                        centre = cluster_model$parameters$mean[c(col_x, col_y),i],
-                                       level = (cluster_model$parameters$pro[i]*level))
+                                       level = (cluster_model$parameters$pro[i]*level_scaled*cluster_model$G))
     ellipse_points <- as.data.frame(ellipse_points)
     ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
@@ -297,6 +298,7 @@ plot_clusters <- function(dataset, col_x, col_y, cluster_model, level = 0.683, l
 plot_clusters_project <- function(dataset, transform = c("pca"),
                                   cluster_model, level = 0.683, legend_thres = 10, alpha=0.3){
 
+  level_scaled <- level/cluster_model$G
   #Get projection
   trans <- prcomp(dataset[, colnames(cluster_model$data)])
 
@@ -319,7 +321,7 @@ plot_clusters_project <- function(dataset, transform = c("pca"),
   ellipse_points_independent <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
     ellipse_points <- ellipse::ellipse(x = trans_clusters$sigma[,,i],
                                        centre = trans_clusters$mean[i,],
-                                       level = level)
+                                       level = level_scaled)
     ellipse_points <- as.data.frame(ellipse_points)
     ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
@@ -328,7 +330,7 @@ plot_clusters_project <- function(dataset, transform = c("pca"),
   ellipse_points_scaled_pi <- foreach(i = 1:cluster_model$G, .combine = rbind) %do% {
     ellipse_points <- ellipse::ellipse(x = trans_clusters$sigma[,,i],
                                        centre = trans_clusters$mean[i,],
-                                       level = (trans_clusters$pro[i]*level))
+                                       level = (trans_clusters$pro[i]*level_scaled*cluster_model$G))
     ellipse_points <- as.data.frame(ellipse_points)
     ellipse_points <- cbind(ellipse_points, data.frame(g=i))
   }
