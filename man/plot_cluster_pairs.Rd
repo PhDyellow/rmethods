@@ -4,8 +4,8 @@
 \alias{plot_cluster_pairs}
 \title{Plot cluster pairs}
 \usage{
-plot_cluster_pairs(dataset, cluster_model, level = 0.683,
-  legend_thres = 10, alpha = 0.3)
+plot_cluster_pairs(dataset, cluster_model, plot_vars = NULL,
+  level = 0.683, legend_thres = 10, alpha = 0.3)
 }
 \arguments{
 \item{dataset}{A data.frame of variables to plot.}
@@ -17,6 +17,8 @@ plot_cluster_pairs(dataset, cluster_model, level = 0.683,
 \item{legend_thres}{When the number of clusters exceeds legend_thres, the legend is not plotted}
 
 \item{alpha}{Alpha value of scatterplot points}
+
+\item{plots_vars}{Character vector of variables to plot. Defaults to all variables fitted in cluster_model}
 }
 \value{
 A list of ggplot object. The ggplot objects are not printed
