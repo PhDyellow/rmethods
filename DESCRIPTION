@@ -19,7 +19,8 @@ Imports:
   lubridate (>= 1.7.4),
   mclust (>= 5.4.2),
   raster (>= 2.8-19),
-  reshape2 (>= 1.4.3)
+  reshape2 (>= 1.4.3),
+  fields (>= 9.6)
 Suggests:
   MASS,
   seaaroundus,
