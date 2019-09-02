@@ -486,3 +486,97 @@ plot_cluster_map_ci <- function(x, rawx, cluster_model, legend_thres = 10, landP
   return(pl)
 
 }
+
+
+
+
+#' Gradient Forest Variable importance weighted by R^2
+#'
+#' Plots variable importance weighted by R^2.
+#'
+#' Uses S3 dispatch to handle both gradientForest and combinedGradientForest
+#'
+#' @param x A gradient forest model
+#'
+#' @return ggplot2 plot object showing R^2 weighted importance
+plot_gf_importance <- function(x) UseMethod("plot_gf_importance")
+
+plot_gf_importance.default <- function(x, ...){
+
+  warning(paste("PLOT_GF_IMPORTANCE does not know how to handle object of class ",
+                class(x),
+                "and can only be used on classes gradientForest and combinedGradientForest"))
+
+}
+
+
+
+plot_gf_importance.gradientForest <- function(x){
+  imp_vars <- gradientForest::importance.gradientForest(x, type = "Weighted")
+  imp_vars_df <- data.frame(env_vars = names(imp_vars), imp = imp_vars)
+  imp_vars_df <- imp_vars_df[order(imp_vars_df$imp) ,]
+
+  pl <- ggplot2::ggplot(data = imp_vars_df, mapping = ggplot2::aes(x = env_vars, y = imp)) +
+    ggplot2::geom_col() +
+    ggplot2::scale_x_discrete(limits = imp_vars_df$env_vars) +
+    ggthemes::theme_tufte() +
+    ggplot2::coord_flip() +
+    ggplot2::labs(x = "", y = "Variable Importance") +
+    ggplot2::theme(axis.ticks.y = ggplot2::element_blank())
+
+  return(pl)
+}
+
+plot_gf_importance.combinedGradientForest <- function(x){
+  imp_vars <- gradientForest::importance.combinedGradientForest(x, type = "Weighted")
+
+  imp_vars_df <- data.frame(env_vars = names(imp_vars), imp = imp_vars)
+  imp_vars_df <- imp_vars_df[order(imp_vars_df$imp) ,]
+
+  pl <- ggplot2::ggplot(data = imp_vars_df, mapping = ggplot2::aes(x = env_vars, y = imp)) +
+    ggplot2::geom_col() +
+    ggplot2::scale_x_discrete(limits = imp_vars_df$env_vars) +
+    ggthemes::theme_tufte() +
+    ggplot2::coord_flip()+
+    ggplot2::labs(x = "", y = "Variable Importance") +
+    ggplot2::theme(axis.ticks.y = ggplot2::element_blank())
+
+return(pl)
+}
+
+
+
+#' GradientForest summary plot collection
+#'
+#' Generates a set of gradientForest plots
+#'
+#' These are base R plots, apart from the variable importance plot
+gf_plots <- function(gf_fit, vars){
+
+  plot_gf_importance(gf_fit)
+
+  if(class(gf_fit)[1] == "gradientForest"){
+
+    plot(gf_fit, plot.type = "S", imp.vars = names(importance(gf_fit))[vars],
+         leg.posn = "topright", cex.legend = 0.4, cex.axis = 0.6,
+         cex.lab = 0.7, line.ylab = 0.9, par.args = list(mgp = c(1.5,
+                                                                 0.5, 0), mar = c(3.1, 1.5, 0.1, 1)))
+
+    plot(gf_fit, plot.type = "C", imp.vars = names(importance(gf_fit))[vars],
+         show.overall = T, show.species = F, legend = T, leg.posn = "topleft",
+         common.scale = T,
+         leg.nspecies = 5, cex.lab = 0.7, cex.legend = 0.4,
+         cex.axis = 0.6, line.ylab = 0.9,
+         par.args =
+           list(mgp = c(1.5,0.5, 0),mar = c(2.5, 1, 0.1, 0.5), omi = c(0, 0.3, 0, 0)))
+
+  } else if (class(gf_fit)[1] == "combinedGradientForest") {
+    plot(gf_fit,plot.type="Predictor.Ranges",imp.vars = names(importance(gf_fit))[vars])
+    plot(gf_fit,plot.type="Predictor.Density",imp.vars = names(importance(gf_fit))[vars])
+    plot(gf_fit,plot.type="Cumulative.Importance",imp.vars = names(importance(gf_fit))[vars])
+    plot(gf_fit,plot.type="Performance")
+
+
+
+  }
+}

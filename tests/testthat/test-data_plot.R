@@ -149,3 +149,30 @@ test_that("Test map plotting", {
   expect_known_hash(plot_maps_points(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = NULL)[[1]], hash = "87a17dd58c")
 })
 
+gf_model <- archivist::loadFromLocalRepo("6c257ac6fde03138579831b3b2abc17f",
+                                         value = TRUE,
+                                         repoDir = "/vmshare/phd/projects/aus_bioregions/experiments/2019-03-21-1330_model_gf_sau_2010_aus_eez/archivist/")
+
+
+
+test_that("Gradient Importance plots work", {
+
+
+  gf_imp_test <- plot_gf_importance(gf_model)
+  current_hash <- substring(digest::digest(gf_imp_test), 1, 10)
+  ggplot2::ggsave(filename = paste0("gf_imp_test_",
+                                    format(Sys.time(), "%Y-%m-%d"),
+                                    "_",
+                                    current_hash,
+                                    ".png"),
+                  plot = gf_imp_test,
+                  path = test_plot_dir,
+                  device = "png",
+                  width = 21,
+                  height = 15,
+                  units = "cm"
+
+  )
+  expect_known_hash(gf_imp_test, hash = "716e09f226")
+})
+

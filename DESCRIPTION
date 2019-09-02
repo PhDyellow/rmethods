@@ -22,6 +22,7 @@ Imports:
   reshape2 (>= 1.4.3),
   fields (>= 9.6)
 Suggests:
+  gradientForest,
   MASS,
   seaaroundus,
   sdmpredictors,
