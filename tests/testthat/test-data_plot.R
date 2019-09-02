@@ -39,7 +39,7 @@ test_that("Test cor plot", {
                   height = 15,
                   units = "cm"
                   )
-  expect_known_hash(cor_heatmap_test, hash = "ce69dd04bb")
+  expect_known_hash(cor_heatmap_test, hash = "4a1bb71c31")
 
 })
 
@@ -73,7 +73,7 @@ test_that("Test marginal plotting", {
                   units = "cm"
 
   )
-  expect_known_hash(marginals_species_test, hash = "9d21ba496b")
+  expect_known_hash(marginals_species_test, hash = "ffd0658f87")
 
 
   expect_length(plot_marginals(bio_data[-(1:3)]), 237)
@@ -95,7 +95,7 @@ test_that("Test marginal plotting", {
                   units = "cm"
 
   )
-  expect_known_hash(marginals_test, hash = "543b6a2152")
+  expect_known_hash(marginals_test, hash = "1ad9c4d788")
 
 })
 
@@ -120,7 +120,7 @@ test_that("Test pair plotting", {
                   units = "cm"
 
   )
-  expect_known_hash(pairs_test, hash = "eb40b6a414")
+  expect_known_hash(pairs_test, hash = "85e8327afe")
 })
 
 
@@ -136,7 +136,7 @@ test_that("Test map plotting", {
   set.seed(1000)
 
   #Buffer size failure
-  expect_known_hash(plot_maps_raster(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = NULL)[[1]], hash = "839100d4c3")
+  expect_known_hash(plot_maps_raster(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = NULL)[[1]], hash = "859d4e38a8")
 
   #expect_error(plot_maps_raster(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = bounding_poly)[[1]],
   #             "cannot allocate vector of size")
@@ -146,7 +146,7 @@ test_that("Test map plotting", {
   expect_s3_class(plot_maps_points(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = bounding_poly)[[1]], "ggplot")
   set.seed(1000)
   #expect_known_hash(plot_maps_points(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = bounding_poly)[[1]], hash = "b1f7e6da98")
-  expect_known_hash(plot_maps_points(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = NULL)[[1]], hash = "87a17dd58c")
+  expect_known_hash(plot_maps_points(bio_data[-3], lat_col = "lat", lon_col = "lon", sf_poly = NULL)[[1]], hash = "d4e7cc96cc")
 })
 
 gf_model <- archivist::loadFromLocalRepo("6c257ac6fde03138579831b3b2abc17f",
