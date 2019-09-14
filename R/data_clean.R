@@ -229,6 +229,7 @@ download_seaaroundus_bio <- function(data_dir = "/vmshare/phd/data/SeaAroundUs/c
 
 
 #' helper function to convert SeaAroundUs IDs to lat and lon values
+#' @export
 sau_id_to_lat_lon <- function(cellId, gridSize = 0.5, centred = TRUE){
   #need to reverse a cycle. every 720 steps is a latitude band
   lonPerLat <- 360/gridSize
